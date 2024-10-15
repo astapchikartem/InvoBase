@@ -1,0 +1,9 @@
+{
+  "name": "invobase",
+  "version": "0.1.0",
+  "description": "NFT Invoice System",
+  "scripts": {
+    "test": "hardhat test",
+    "compile": "hardhat compile"
+  }
+}
