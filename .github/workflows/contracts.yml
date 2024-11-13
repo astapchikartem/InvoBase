@@ -1,0 +1,136 @@
+name: Smart Contracts Management
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Action to perform'
+        required: true
+        type: choice
+        options:
+          - deploy
+          - upgrade
+      network:
+        description: 'Network'
+        required: true
+        type: choice
+        options:
+          - sepolia
+          - mainnet
+      version:
+        description: 'Version (for upgrades only, e.g., 2.0.0)'
+        required: false
+        default: ''
+      confirm:
+        description: 'Type "confirm" for mainnet operations'
+        required: false
+        default: ''
+
+jobs:
+  execute:
+    runs-on: ubuntu-latest
+    if: |
+      (github.event.inputs.network == 'sepolia') ||
+      (github.event.inputs.network == 'mainnet' && github.event.inputs.confirm == 'confirm')
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'yarn'
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Compile contracts
+        run: yarn compile
+
+      - name: Run tests
+        run: yarn test
+
+      - name: Deploy to Base Sepolia
+        if: |
+          github.event.inputs.action == 'deploy' && 
+          github.event.inputs.network == 'sepolia'
+        env:
+          DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
+          BASE_SEPOLIA_RPC: ${{ secrets.BASE_SEPOLIA_RPC }}
+          BASESCAN_API_KEY: ${{ secrets.BASESCAN_API_KEY }}
+        run: yarn deploy:sepolia
+
+      - name: Deploy to Base Mainnet
+        if: |
+          github.event.inputs.action == 'deploy' && 
+          github.event.inputs.network == 'mainnet'
+        env:
+          DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
+          BASE_RPC: ${{ secrets.BASE_RPC }}
+          BASESCAN_API_KEY: ${{ secrets.BASESCAN_API_KEY }}
+        run: yarn deploy:mainnet
+
+      - name: Upgrade Base Sepolia
+        if: |
+          github.event.inputs.action == 'upgrade' && 
+          github.event.inputs.network == 'sepolia'
+        env:
+          DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
+          BASE_SEPOLIA_RPC: ${{ secrets.BASE_SEPOLIA_RPC }}
+          BASESCAN_API_KEY: ${{ secrets.BASESCAN_API_KEY }}
+        run: yarn upgrade:sepolia
+
+      - name: Upgrade Base Mainnet
+        if: |
+          github.event.inputs.action == 'upgrade' && 
+          github.event.inputs.network == 'mainnet'
+        env:
+          DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
+          BASE_RPC: ${{ secrets.BASE_RPC }}
+          BASESCAN_API_KEY: ${{ secrets.BASESCAN_API_KEY }}
+        run: yarn upgrade:mainnet
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ github.event.inputs.action }}-${{ github.event.inputs.network }}-${{ github.run_number }}
+          path: deployments/
+          retention-days: 365
+
+      - name: Commit changes
+        run: |
+          git config --local user.email "astapchikartem@outlook.com"
+          git config --local user.name "astapchikartem"
+          git add deployments/
+          if [ "${{ github.event.inputs.action }}" = "deploy" ]; then
+            git diff --staged --quiet || git commit -m "deploy: ${{ github.event.inputs.network }} contracts deployed
+
+Added deployment addresses and configuration for Base ${{ github.event.inputs.network }}.
+Contracts verified on Basescan."
+          else
+            git diff --staged --quiet || git commit -m "upgrade: ${{ github.event.inputs.network }} to v${{ github.event.inputs.version }}
+
+Upgraded smart contracts on Base ${{ github.event.inputs.network }} to version ${{ github.event.inputs.version }}.
+Added new features and improvements."
+          fi
+          
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ github.ref }}
+
+      - name: Create release
+        if: github.event.inputs.network == 'mainnet'
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ github.event.inputs.version || '1.0.0' }}-${{ github.event.inputs.action }}
+          release_name: ${{ github.event.inputs.action == 'deploy' && 'Production Deployment' || format('Version {0}', github.event.inputs.version) }}
+          body: |
+            ${{ github.event.inputs.action == 'deploy' && 'Base Mainnet production deployment completed.' || format('Upgraded to version {0} on Base Mainnet.', github.event.inputs.version) }}
+          draft: false
+          prerelease: ${{ github.event.inputs.action == 'upgrade' }}
