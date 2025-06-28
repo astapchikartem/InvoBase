@@ -1,0 +1,45 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+    inputs:
+      network:
+        description: 'Network to deploy to'
+        required: true
+        type: choice
+        options:
+          - base_sepolia
+          - base_mainnet
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.network }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - name: Install dependencies
+        run: forge install
+
+      - name: Deploy to ${{ inputs.network }}
+        env:
+          DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
+          BASE_SEPOLIA_RPC: ${{ secrets.BASE_SEPOLIA_RPC }}
+          BASE_MAINNET_RPC: ${{ secrets.BASE_MAINNET_RPC }}
+          BASESCAN_API_KEY: ${{ secrets.BASESCAN_API_KEY }}
+        run: |
+          forge script script/Deploy.s.sol \
+            --rpc-url ${{ inputs.network }} \
+            --broadcast \
+            --verify
+
+      - name: Save deployment artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: deployment-${{ inputs.network }}-${{ github.sha }}
+          path: broadcast/
