@@ -23,6 +23,8 @@ contract InvoiceManager is
     error InvalidStatus();
     error InvoiceExpired();
     error InvalidAmount();
+    error InvalidAddress();
+    error InvalidDueDate();
 
     function initialize(address initialOwner) public initializer {
         __Ownable_init(initialOwner);
@@ -38,6 +40,7 @@ contract InvoiceManager is
         string calldata metadata
     ) external override returns (uint256) {
         if (amount == 0) revert InvalidAmount();
+        if (payer == address(0) || asset == address(0)) revert InvalidAddress();
 
         uint256 invoiceId = nextInvoiceId++;
 
@@ -64,6 +67,7 @@ contract InvoiceManager is
 
         if (invoice.issuer != msg.sender) revert UnauthorizedAccess();
         if (invoice.status != InvoiceStatus.Draft) revert InvalidStatus();
+        if (dueDate <= block.timestamp) revert InvalidDueDate();
 
         invoice.status = InvoiceStatus.Issued;
         invoice.dueDate = dueDate;
