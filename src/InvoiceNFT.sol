@@ -99,7 +99,32 @@ contract InvoiceNFT is ERC721Upgradeable, OwnableUpgradeable, UUPSUpgradeable {
     }
 
     function _encode(bytes memory data) internal pure returns (string memory) {
-        return ""; // Simplified for now
+        bytes memory table = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+        uint256 len = data.length;
+        if (len == 0) return "";
+
+        uint256 encodedLen = 4 * ((len + 2) / 3);
+        bytes memory result = new bytes(encodedLen);
+
+        uint256 i;
+        uint256 j;
+        for (i = 0; i < len - 2; i += 3) {
+            result[j++] = table[uint8(data[i] >> 2)];
+            result[j++] = table[uint8(((data[i] & 0x03) << 4) | (uint8(data[i + 1]) >> 4))];
+            result[j++] = table[uint8(((data[i + 1] & 0x0f) << 2) | (uint8(data[i + 2]) >> 6))];
+            result[j++] = table[uint8(data[i + 2] & 0x3f)];
+        }
+
+        if (len % 3 == 1) {
+            result[j++] = table[uint8(data[len - 1] >> 2)];
+            result[j++] = table[uint8((data[len - 1] & 0x03) << 4)];
+        } else if (len % 3 == 2) {
+            result[j++] = table[uint8(data[len - 2] >> 2)];
+            result[j++] = table[uint8(((data[len - 2] & 0x03) << 4) | (uint8(data[len - 1]) >> 4))];
+            result[j++] = table[uint8((data[len - 1] & 0x0f) << 2)];
+        }
+
+        return string(result);
     }
 
     function setInvoiceManager(address _invoiceManager) external onlyOwner {
