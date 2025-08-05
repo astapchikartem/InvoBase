@@ -34,4 +34,22 @@ library InvoiceLib {
             && invoice.amount > 0
             && invoice.asset != address(0);
     }
+
+    function getDaysUntilDue(IInvoiceManager.Invoice memory invoice) internal view returns (uint256) {
+        if (invoice.dueDate <= block.timestamp) return 0;
+        return (invoice.dueDate - block.timestamp) / 1 days;
+    }
+
+    function getDaysOverdue(IInvoiceManager.Invoice memory invoice) internal view returns (uint256) {
+        if (!isOverdue(invoice)) return 0;
+        return (block.timestamp - invoice.dueDate) / 1 days;
+    }
+
+    function getPaymentStatus(IInvoiceManager.Invoice memory invoice) internal view returns (string memory) {
+        if (invoice.status == IInvoiceManager.InvoiceStatus.Paid) return "PAID";
+        if (invoice.status == IInvoiceManager.InvoiceStatus.Cancelled) return "CANCELLED";
+        if (invoice.status == IInvoiceManager.InvoiceStatus.Draft) return "DRAFT";
+        if (isOverdue(invoice)) return "OVERDUE";
+        return "PENDING";
+    }
 }
