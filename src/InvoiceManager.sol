@@ -80,7 +80,6 @@ contract InvoiceManager is
 
         if (msg.sender != invoice.payer) revert UnauthorizedAccess();
         if (invoice.status != InvoiceStatus.Issued) revert InvalidStatus();
-        if (block.timestamp > invoice.dueDate) revert InvoiceExpired();
 
         invoice.status = InvoiceStatus.Paid;
         invoice.paidAt = block.timestamp;
