@@ -131,4 +131,33 @@ contract InvoiceManagerTest is Test {
         vm.expectRevert(InvoiceManager.UnauthorizedAccess.selector);
         invoiceManager.issueInvoice(invoiceId, block.timestamp + 30 days);
     }
+
+    function testRevertZeroAmount() public {
+        vm.prank(issuer);
+        vm.expectRevert(InvoiceManager.InvalidAmount.selector);
+        invoiceManager.createInvoice(payer, 0, address(usdc), "Invalid");
+    }
+
+    function testRevertInvalidAddress() public {
+        vm.prank(issuer);
+        vm.expectRevert(InvoiceManager.InvalidAddress.selector);
+        invoiceManager.createInvoice(address(0), 1000e6, address(usdc), "Invalid");
+    }
+
+    function testRevertPayUnauthorized() public {
+        vm.prank(issuer);
+        uint256 invoiceId = invoiceManager.createInvoice(
+            payer,
+            1000e6,
+            address(usdc),
+            "Invoice #001"
+        );
+
+        vm.prank(issuer);
+        invoiceManager.issueInvoice(invoiceId, block.timestamp + 30 days);
+
+        vm.prank(issuer);
+        vm.expectRevert(InvoiceManager.UnauthorizedAccess.selector);
+        invoiceManager.payInvoice(invoiceId);
+    }
 }
