@@ -1,0 +1,8 @@
+InvoiceManagerTest:testCancelInvoice() (gas: 158942)
+InvoiceManagerTest:testCreateInvoice() (gas: 172318)
+InvoiceManagerTest:testIssueInvoice() (gas: 189547)
+InvoiceManagerTest:testPayInvoice() (gas: 245623)
+InvoiceManagerTest:testRevertInvalidAddress() (gas: 12844)
+InvoiceManagerTest:testRevertPayUnauthorized() (gas: 195421)
+InvoiceManagerTest:testRevertUnauthorizedIssue() (gas: 178532)
+InvoiceManagerTest:testRevertZeroAmount() (gas: 12732)
