@@ -21,9 +21,20 @@ On-chain invoicing engine built for Base network. Create, track, and settle invo
 ## Setup
 
 ```bash
+# Install dependencies
 forge install
+
+# Build contracts
 forge build
+
+# Run tests
 forge test
+
+# Run tests with gas report
+forge test --gas-report
+
+# Generate coverage report
+forge coverage
 ```
 
 ## Deployment
