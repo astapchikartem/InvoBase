@@ -108,5 +108,9 @@ contract InvoiceManager is
         return invoices[id];
     }
 
+    function getNextInvoiceId() external view returns (uint256) {
+        return nextInvoiceId;
+    }
+
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 }
