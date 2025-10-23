@@ -9,3 +9,8 @@ lib/
 coverage/
 lcov.info
 .DS_Store
+.idea/
+*.swp
+*.swo
+*~
+.solhint-cache
