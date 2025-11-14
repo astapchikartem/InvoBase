@@ -11,3 +11,7 @@ PROGRESS.md
 SETUP_GITHUB.md
 .github/COMMIT_GUIDE.md
 .emergent/
+-e 
+# Environment files
+*.env
+*.env.*
