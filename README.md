@@ -45,6 +45,14 @@ Requires environment variables:
 - `BASESCAN_API_KEY`
 - `DEPLOYER_PRIVATE_KEY`
 
+## Security
+
+This project undergoes automated security scanning with Slither and Mythril. For security concerns, please contact the maintainers.
+
+## Contributing
+
+Contributions are welcome! Please ensure all tests pass and follow the coding standards.
+
 ## License
 
 MIT
