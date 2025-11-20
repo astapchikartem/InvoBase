@@ -12,6 +12,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install dependencies
+        run: |
+          forge install OpenZeppelin/openzeppelin-contracts@v5.0.0 --no-commit
+          forge install OpenZeppelin/openzeppelin-contracts-upgradeable@v5.0.0 --no-commit
+          forge install foundry-rs/forge-std@v1.7.0 --no-commit
+
       - name: Run Slither
         uses: crytic/slither-action@v0.3.0
         with:
@@ -25,6 +31,12 @@ jobs:
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
+
+      - name: Install dependencies
+        run: |
+          forge install OpenZeppelin/openzeppelin-contracts@v5.0.0 --no-commit
+          forge install OpenZeppelin/openzeppelin-contracts-upgradeable@v5.0.0 --no-commit
+          forge install foundry-rs/forge-std@v1.7.0 --no-commit
 
       - name: Build contracts
         run: forge build
