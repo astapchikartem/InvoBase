@@ -38,7 +38,9 @@ jobs:
         run: |
           forge script script/DeployToBase.s.sol:DeployToBaseSepolia \
             --rpc-url $BASE_SEPOLIA_RPC \
-            --broadcast
+            --broadcast \
+            --verify \
+            --delay 10
 
       - name: Deploy to Base Mainnet
         if: inputs.network == 'base_mainnet'
@@ -49,7 +51,9 @@ jobs:
         run: |
           forge script script/DeployToBase.s.sol:DeployToBaseMainnet \
             --rpc-url $BASE_MAINNET_RPC \
-            --broadcast
+            --broadcast \
+            --verify \
+            --delay 10
 
       - name: Save deployment artifacts
         uses: actions/upload-artifact@v4
