@@ -1,0 +1,59 @@
+name: Deploy InvoiceNFT
+
+on:
+  workflow_dispatch:
+    inputs:
+      network:
+        description: 'Network to deploy to'
+        required: true
+        type: choice
+        options:
+          - base_sepolia
+          - base_mainnet
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - name: Install dependencies
+        run: forge install
+
+      - name: Build contracts
+        run: forge build
+
+      - name: Deploy to Base Sepolia
+        if: inputs.network == 'base_sepolia'
+        env:
+          DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
+          BASE_SEPOLIA_RPC: ${{ secrets.BASE_SEPOLIA_RPC }}
+          BASESCAN_API_KEY: ${{ secrets.BASESCAN_API_KEY }}
+        run: |
+          forge script script/DeployToBase.s.sol:DeployToBaseSepolia \
+            --rpc-url $BASE_SEPOLIA_RPC \
+            --broadcast \
+            --verify
+
+      - name: Deploy to Base Mainnet
+        if: inputs.network == 'base_mainnet'
+        env:
+          DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
+          BASE_MAINNET_RPC: ${{ secrets.BASE_MAINNET_RPC }}
+          BASESCAN_API_KEY: ${{ secrets.BASESCAN_API_KEY }}
+        run: |
+          forge script script/DeployToBase.s.sol:DeployToBaseMainnet \
+            --rpc-url $BASE_MAINNET_RPC \
+            --broadcast \
+            --verify
+
+      - name: Save deployment artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-${{ inputs.network }}-${{ github.run_number }}
+          path: |
+            broadcast/
+            deployments/
