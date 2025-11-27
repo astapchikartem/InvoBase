@@ -1,17 +1,12 @@
 {
   "network": "base-sepolia",
-  "proxy": "0xDe9aD4eD1909204319AF94605d40CA5886fB97f8",
-  "implementation": "0x3245fcB0b0ff4a976eee4AcD86F103B78d82B8FE",
+  "proxy": "0x59aD7168615DeE3024c4d2719eDAb656ad9cCE9c",
+  "implementation": "0x128d4AC2b09E0Ce1df5E1DBbA6A276C2754BCb94",
   "deployer": "0x2A028763A83FFcC360cfbE23ef19b3bd4CEc3f14",
   "chainId": 84532,
-  "blockNumber": 34253643,
-  "timestamp": 1732739574,
-  "verified": {
-    "proxy": true,
-    "implementation": false
-  },
+  "verified": true,
   "urls": {
-    "proxy": "https://sepolia.basescan.org/address/0xde9ad4ed1909204319af94605d40ca5886fb97f8",
-    "implementation": "https://sepolia.basescan.org/address/0x3245fcb0b0ff4a976eee4acd86f103b78d82b8fe"
+    "proxy": "https://sepolia.basescan.org/address/0x59ad7168615dee3024c4d2719edab656ad9cce9c",
+    "implementation": "https://sepolia.basescan.org/address/0x128d4ac2b09e0ce1df5e1dbba6a276c2754bcb94"
   }
 }
