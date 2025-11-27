@@ -21,10 +21,13 @@ jobs:
         uses: foundry-rs/foundry-toolchain@v1
 
       - name: Install dependencies
-        run: forge install
+        run: |
+          forge install foundry-rs/forge-std@v1.7.0 --no-commit
+          forge install OpenZeppelin/openzeppelin-contracts@v5.0.2 --no-commit
+          forge install OpenZeppelin/openzeppelin-contracts-upgradeable@v5.0.2 --no-commit
 
       - name: Build contracts
-        run: forge build
+        run: forge build --force
 
       - name: Deploy to Base Sepolia
         if: inputs.network == 'base_sepolia'
