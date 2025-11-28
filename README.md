@@ -6,6 +6,48 @@ On-chain invoicing protocol for Base network. Each invoice is represented as an 
 
 InvoBase enables freelancers, teams, DAOs, and businesses to issue, track, and settle invoices entirely on-chain using Base network. Invoices are minted as non-transferable NFTs, ensuring tamper-proof records and transparent payment history.
 
+## Architecture
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                        InvoiceNFT                           │
+│                     (UUPS Upgradeable)                      │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  Lifecycle Management:                                      │
+│  ┌──────────┐   ┌──────────┐   ┌──────────┐   ┌──────────┐│
+│  │  Draft   │──▶│  Issued  │──▶│   Paid   │   │Cancelled ││
+│  └──────────┘   └──────────┘   └──────────┘   └──────────┘│
+│                                                             │
+│  Storage:                                                   │
+│  • Invoice ID → Invoice Data                               │
+│  • Non-transferable ERC721                                 │
+│  • Owner = Issuer (until paid)                             │
+│                                                             │
+│  Functions:                                                 │
+│  • mint(payer, amount, dueDate)                            │
+│  • issue(tokenId)                                          │
+│  • markPaid(tokenId)                                       │
+│  • cancel(tokenId)                                         │
+│  • getInvoice(tokenId)                                     │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              │ UUPS Proxy Pattern
+                              ▼
+                    ┌──────────────────┐
+                    │  ERC1967 Proxy   │
+                    │   (Immutable)    │
+                    └──────────────────┘
+                              │
+                              │ Storage + Logic
+                              ▼
+                ┌──────────────────────────────┐
+                │  Implementation Contract     │
+                │  (Upgradeable via Owner)     │
+                └──────────────────────────────┘
+```
+
 ## Core Features
 
 **Invoice-as-NFT Architecture**
@@ -47,22 +89,6 @@ InvoBase enables freelancers, teams, DAOs, and businesses to issue, track, and s
 - **Network:** Base L2 (Mainnet + Sepolia)
 - **Standards:** ERC721, UUPS (ERC1967)
 - **Dependencies:** OpenZeppelin Contracts Upgradeable v5.0.2
-
-## Development
-
-```bash
-# Install dependencies
-forge install
-
-# Build contracts
-forge build
-
-# Run tests
-forge test
-
-# Run tests with gas report
-forge test --gas-report
-```
 
 ## License
 
