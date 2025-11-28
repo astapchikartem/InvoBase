@@ -1,0 +1,12 @@
+{
+  "network": "base-mainnet",
+  "proxy": "0xE8E1563be6e10a764C24A46158f661e53D407771",
+  "implementation": "0x33A023649e69e89bF192e1367979eF1dB653d635",
+  "deployer": "0x2A028763A83FFcC360cfbE23ef19b3bd4CEc3f14",
+  "chainId": 8453,
+  "verified": true,
+  "urls": {
+    "proxy": "https://basescan.org/address/0xe8e1563be6e10a764c24a46158f661e53d407771",
+    "implementation": "https://basescan.org/address/0x33a023649e69e89bf192e1367979ef1db653d635"
+  }
+}

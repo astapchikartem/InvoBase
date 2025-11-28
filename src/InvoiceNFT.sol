@@ -6,129 +6,105 @@ import {OwnableUpgradeable} from "@openzeppelin-upgradeable/contracts/access/Own
 import {UUPSUpgradeable} from "@openzeppelin-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
 
 contract InvoiceNFT is ERC721Upgradeable, OwnableUpgradeable, UUPSUpgradeable {
-    address public invoiceManager;
+    enum InvoiceStatus {
+        Draft,
+        Issued,
+        Paid,
+        Cancelled
+    }
 
-    struct InvoiceReceipt {
-        uint256 invoiceId;
+    struct Invoice {
         address issuer;
         address payer;
         uint256 amount;
-        uint256 paidAt;
+        uint256 dueDate;
+        InvoiceStatus status;
+        uint256 createdAt;
     }
 
-    mapping(uint256 => InvoiceReceipt) public receipts;
+    mapping(uint256 => Invoice) private _invoices;
+    uint256 private _nextTokenId;
 
-    error UnauthorizedMinter();
+    event InvoiceMinted(uint256 indexed tokenId, address indexed issuer, address indexed payer, uint256 amount);
+    event StatusChanged(uint256 indexed tokenId, InvoiceStatus oldStatus, InvoiceStatus newStatus);
 
-    modifier onlyInvoiceManager() {
-        if (msg.sender != invoiceManager) revert UnauthorizedMinter();
-        _;
-    }
+    error UnauthorizedTransfer();
+    error InvalidStatus();
+    error Unauthorized();
 
-    function initialize(address _invoiceManager, address owner) public initializer {
-        __ERC721_init("InvoBase Receipt", "INVR");
-        __Ownable_init(owner);
+    function initialize(address initialOwner) public initializer {
+        __ERC721_init("InvoBase Invoice", "INVO");
+        __Ownable_init(initialOwner);
         __UUPSUpgradeable_init();
-        invoiceManager = _invoiceManager;
+        _nextTokenId = 1;
     }
 
     function mint(
-        address to,
-        uint256 tokenId,
-        uint256 invoiceId,
-        address issuer,
+        address payer,
         uint256 amount,
-        uint256 paidAt
-    ) external onlyInvoiceManager {
-        _mint(to, tokenId);
+        uint256 dueDate
+    ) external returns (uint256) {
+        uint256 tokenId = _nextTokenId++;
 
-        receipts[tokenId] = InvoiceReceipt({
-            invoiceId: invoiceId,
-            issuer: issuer,
-            payer: to,
+        _invoices[tokenId] = Invoice({
+            issuer: msg.sender,
+            payer: payer,
             amount: amount,
-            paidAt: paidAt
+            dueDate: dueDate,
+            status: InvoiceStatus.Draft,
+            createdAt: block.timestamp
         });
+
+        _mint(msg.sender, tokenId);
+
+        emit InvoiceMinted(tokenId, msg.sender, payer, amount);
+
+        return tokenId;
     }
 
-    function tokenURI(uint256 tokenId) public view override returns (string memory) {
-        _requireOwned(tokenId);
-        return _buildTokenURI(tokenId);
+    function issue(uint256 tokenId) external {
+        Invoice storage invoice = _invoices[tokenId];
+        if (invoice.issuer != msg.sender) revert Unauthorized();
+        if (invoice.status != InvoiceStatus.Draft) revert InvalidStatus();
+
+        InvoiceStatus oldStatus = invoice.status;
+        invoice.status = InvoiceStatus.Issued;
+
+        emit StatusChanged(tokenId, oldStatus, InvoiceStatus.Issued);
     }
 
-    function _buildTokenURI(uint256 tokenId) internal view returns (string memory) {
-        InvoiceReceipt memory receipt = receipts[tokenId];
-        return string(
-            abi.encodePacked(
-                "data:application/json;base64,",
-                _encode(
-                    abi.encodePacked(
-                        '{"name":"Invoice Receipt #',
-                        _toString(receipt.invoiceId),
-                        '","description":"Payment receipt for invoice #',
-                        _toString(receipt.invoiceId),
-                        '","attributes":[',
-                        '{"trait_type":"Invoice ID","value":"',
-                        _toString(receipt.invoiceId),
-                        '"},',
-                        '{"trait_type":"Amount","value":"',
-                        _toString(receipt.amount),
-                        '"}',
-                        "]}"
-                    )
-                )
-            )
-        );
+    function markPaid(uint256 tokenId) external {
+        Invoice storage invoice = _invoices[tokenId];
+        if (invoice.issuer != msg.sender && invoice.payer != msg.sender) revert Unauthorized();
+        if (invoice.status != InvoiceStatus.Issued) revert InvalidStatus();
+
+        InvoiceStatus oldStatus = invoice.status;
+        invoice.status = InvoiceStatus.Paid;
+
+        emit StatusChanged(tokenId, oldStatus, InvoiceStatus.Paid);
     }
 
-    function _toString(uint256 value) internal pure returns (string memory) {
-        if (value == 0) return "0";
-        uint256 temp = value;
-        uint256 digits;
-        while (temp != 0) {
-            digits++;
-            temp /= 10;
-        }
-        bytes memory buffer = new bytes(digits);
-        while (value != 0) {
-            digits--;
-            buffer[digits] = bytes1(uint8(48 + (value % 10)));
-            value /= 10;
-        }
-        return string(buffer);
+    function cancel(uint256 tokenId) external {
+        Invoice storage invoice = _invoices[tokenId];
+        if (invoice.issuer != msg.sender) revert Unauthorized();
+        if (invoice.status == InvoiceStatus.Paid) revert InvalidStatus();
+
+        InvoiceStatus oldStatus = invoice.status;
+        invoice.status = InvoiceStatus.Cancelled;
+
+        emit StatusChanged(tokenId, oldStatus, InvoiceStatus.Cancelled);
     }
 
-    function _encode(bytes memory data) internal pure returns (string memory) {
-        bytes memory table = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-        uint256 len = data.length;
-        if (len == 0) return "";
-
-        uint256 encodedLen = 4 * ((len + 2) / 3);
-        bytes memory result = new bytes(encodedLen);
-
-        uint256 i;
-        uint256 j;
-        for (i = 0; i < len - 2; i += 3) {
-            result[j++] = table[uint8(data[i] >> 2)];
-            result[j++] = table[uint8((uint8(data[i] & 0x03) << 4) | (uint8(data[i + 1]) >> 4))];
-            result[j++] = table[uint8((uint8(data[i + 1] & 0x0f) << 2) | (uint8(data[i + 2]) >> 6))];
-            result[j++] = table[uint8(data[i + 2] & 0x3f)];
-        }
-
-        if (len % 3 == 1) {
-            result[j++] = table[uint8(data[len - 1] >> 2)];
-            result[j++] = table[uint8(uint8(data[len - 1] & 0x03) << 4)];
-        } else if (len % 3 == 2) {
-            result[j++] = table[uint8(data[len - 2] >> 2)];
-            result[j++] = table[uint8((uint8(data[len - 2] & 0x03) << 4) | (uint8(data[len - 1]) >> 4))];
-            result[j++] = table[uint8(uint8(data[len - 1] & 0x0f) << 2)];
-        }
-
-        return string(result);
+    function getInvoice(uint256 tokenId) external view returns (Invoice memory) {
+        return _invoices[tokenId];
     }
 
-    function setInvoiceManager(address _invoiceManager) external onlyOwner {
-        invoiceManager = _invoiceManager;
+    function transferFrom(address from, address to, uint256 tokenId) public virtual override {
+        revert UnauthorizedTransfer();
+    }
+
+    function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory data) public virtual override {
+        revert UnauthorizedTransfer();
     }
 
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
