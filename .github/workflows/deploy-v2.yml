@@ -1,27 +1,4 @@
-# InvoBase V2 Universal Deployment Workflow
-#
-# This workflow handles all V2 deployment scenarios:
-#
-# 1. upgrade_existing_proxy - RECOMMENDED FOR MAINNET
-#    - Upgrades existing InvoiceNFT proxy to V2
-#    - Preserves all existing invoices and data
-#    - Deploys InvoicePayment + PaymentLink
-#    - Use this to add payment features to existing contract
-#
-# 2. deploy_new_full_v2
-#    - Fresh deployment of complete V2 system
-#    - New proxy + InvoicePayment + PaymentLink
-#    - Use for testing or separate instances
-#
-# 3. deploy_payment_processor_only
-#    - Deploys only InvoicePayment contract
-#    - Requires existing V2 proxy
-#
-# 4. deploy_payment_link_only
-#    - Deploys only PaymentLink contract
-#    - Requires existing V2 proxy + InvoicePayment
-
-name: InvoBase V2 Deployment
+name: InvoBase Deployment
 
 on:
   workflow_dispatch:
@@ -33,15 +10,22 @@ on:
         options:
           - base_sepolia
           - base_mainnet
-      operation:
-        description: 'Operation'
+      action_type:
+        description: 'Action Type'
         required: true
         type: choice
         options:
-          - upgrade_existing_proxy
-          - deploy_new_full_v2
-          - deploy_payment_processor_only
-          - deploy_payment_link_only
+          - upgrade
+          - deploy
+      contract:
+        description: 'Contract'
+        required: true
+        type: choice
+        options:
+          - all
+          - invoice_nft
+          - payment_processor
+          - payment_link
 
 jobs:
   deploy:
@@ -62,10 +46,10 @@ jobs:
         run: forge build --force
 
       # ========================================
-      # UPGRADE EXISTING PROXY TO V2
+      # UPGRADE - ALL CONTRACTS
       # ========================================
-      - name: ⬆️ Upgrade Existing Proxy to V2 (Sepolia)
-        if: inputs.network == 'base_sepolia' && inputs.operation == 'upgrade_existing_proxy'
+      - name: ⬆️ Upgrade All (Sepolia)
+        if: inputs.network == 'base_sepolia' && inputs.action_type == 'upgrade' && inputs.contract == 'all'
         env:
           DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
           BASE_SEPOLIA_RPC: ${{ secrets.BASE_SEPOLIA_RPC }}
@@ -77,8 +61,8 @@ jobs:
             --verify \
             --delay 10
 
-      - name: ⬆️ Upgrade Existing Proxy to V2 (Mainnet)
-        if: inputs.network == 'base_mainnet' && inputs.operation == 'upgrade_existing_proxy'
+      - name: ⬆️ Upgrade All (Mainnet)
+        if: inputs.network == 'base_mainnet' && inputs.action_type == 'upgrade' && inputs.contract == 'all'
         env:
           DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
           BASE_MAINNET_RPC: ${{ secrets.BASE_MAINNET_RPC }}
@@ -91,10 +75,10 @@ jobs:
             --delay 10
 
       # ========================================
-      # DEPLOY NEW FULL V2 (Fresh deployment with new proxy)
+      # DEPLOY - ALL CONTRACTS
       # ========================================
-      - name: 🚀 Deploy New Full V2 (Sepolia)
-        if: inputs.network == 'base_sepolia' && inputs.operation == 'deploy_new_full_v2'
+      - name: 🚀 Deploy All (Sepolia)
+        if: inputs.network == 'base_sepolia' && inputs.action_type == 'deploy' && inputs.contract == 'all'
         env:
           DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
           BASE_SEPOLIA_RPC: ${{ secrets.BASE_SEPOLIA_RPC }}
@@ -106,8 +90,8 @@ jobs:
             --verify \
             --delay 10
 
-      - name: 🚀 Deploy New Full V2 (Mainnet)
-        if: inputs.network == 'base_mainnet' && inputs.operation == 'deploy_new_full_v2'
+      - name: 🚀 Deploy All (Mainnet)
+        if: inputs.network == 'base_mainnet' && inputs.action_type == 'deploy' && inputs.contract == 'all'
         env:
           DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
           BASE_MAINNET_RPC: ${{ secrets.BASE_MAINNET_RPC }}
@@ -120,10 +104,10 @@ jobs:
             --delay 10
 
       # ========================================
-      # DEPLOY PAYMENT PROCESSOR ONLY
+      # DEPLOY - PAYMENT PROCESSOR
       # ========================================
-      - name: 💳 Deploy Payment Processor Only (Sepolia)
-        if: inputs.network == 'base_sepolia' && inputs.operation == 'deploy_payment_processor_only'
+      - name: 💳 Deploy Payment Processor (Sepolia)
+        if: inputs.network == 'base_sepolia' && inputs.action_type == 'deploy' && inputs.contract == 'payment_processor'
         env:
           DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
           BASE_SEPOLIA_RPC: ${{ secrets.BASE_SEPOLIA_RPC }}
@@ -135,8 +119,8 @@ jobs:
             --verify \
             --delay 10
 
-      - name: 💳 Deploy Payment Processor Only (Mainnet)
-        if: inputs.network == 'base_mainnet' && inputs.operation == 'deploy_payment_processor_only'
+      - name: 💳 Deploy Payment Processor (Mainnet)
+        if: inputs.network == 'base_mainnet' && inputs.action_type == 'deploy' && inputs.contract == 'payment_processor'
         env:
           DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
           BASE_MAINNET_RPC: ${{ secrets.BASE_MAINNET_RPC }}
@@ -149,10 +133,10 @@ jobs:
             --delay 10
 
       # ========================================
-      # DEPLOY PAYMENT LINK ONLY
+      # DEPLOY - PAYMENT LINK
       # ========================================
-      - name: 🔗 Deploy Payment Link Only (Sepolia)
-        if: inputs.network == 'base_sepolia' && inputs.operation == 'deploy_payment_link_only'
+      - name: 🔗 Deploy Payment Link (Sepolia)
+        if: inputs.network == 'base_sepolia' && inputs.action_type == 'deploy' && inputs.contract == 'payment_link'
         env:
           DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
           BASE_SEPOLIA_RPC: ${{ secrets.BASE_SEPOLIA_RPC }}
@@ -164,8 +148,8 @@ jobs:
             --verify \
             --delay 10
 
-      - name: 🔗 Deploy Payment Link Only (Mainnet)
-        if: inputs.network == 'base_mainnet' && inputs.operation == 'deploy_payment_link_only'
+      - name: 🔗 Deploy Payment Link (Mainnet)
+        if: inputs.network == 'base_mainnet' && inputs.action_type == 'deploy' && inputs.contract == 'payment_link'
         env:
           DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
           BASE_MAINNET_RPC: ${{ secrets.BASE_MAINNET_RPC }}
@@ -177,10 +161,68 @@ jobs:
             --verify \
             --delay 10
 
+      # ========================================
+      # UPGRADE - INVOICE NFT ONLY
+      # ========================================
+      - name: ⬆️ Upgrade InvoiceNFT (Sepolia)
+        if: inputs.network == 'base_sepolia' && inputs.action_type == 'upgrade' && inputs.contract == 'invoice_nft'
+        env:
+          DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
+          BASE_SEPOLIA_RPC: ${{ secrets.BASE_SEPOLIA_RPC }}
+          BASESCAN_API_KEY: ${{ secrets.BASESCAN_API_KEY }}
+        run: |
+          forge script script/UpgradeToV2.s.sol:UpgradeToV2Sepolia \
+            --rpc-url $BASE_SEPOLIA_RPC \
+            --broadcast \
+            --verify \
+            --delay 10
+
+      - name: ⬆️ Upgrade InvoiceNFT (Mainnet)
+        if: inputs.network == 'base_mainnet' && inputs.action_type == 'upgrade' && inputs.contract == 'invoice_nft'
+        env:
+          DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
+          BASE_MAINNET_RPC: ${{ secrets.BASE_MAINNET_RPC }}
+          BASESCAN_API_KEY: ${{ secrets.BASESCAN_API_KEY }}
+        run: |
+          forge script script/UpgradeToV2.s.sol:UpgradeToV2Mainnet \
+            --rpc-url $BASE_MAINNET_RPC \
+            --broadcast \
+            --verify \
+            --delay 10
+
+      # ========================================
+      # DEPLOY - INVOICE NFT
+      # ========================================
+      - name: 🚀 Deploy InvoiceNFT (Sepolia)
+        if: inputs.network == 'base_sepolia' && inputs.action_type == 'deploy' && inputs.contract == 'invoice_nft'
+        env:
+          DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
+          BASE_SEPOLIA_RPC: ${{ secrets.BASE_SEPOLIA_RPC }}
+          BASESCAN_API_KEY: ${{ secrets.BASESCAN_API_KEY }}
+        run: |
+          forge script script/DeployInvoiceNFTV2.s.sol:DeployInvoiceNFTV2 \
+            --rpc-url $BASE_SEPOLIA_RPC \
+            --broadcast \
+            --verify \
+            --delay 10
+
+      - name: 🚀 Deploy InvoiceNFT (Mainnet)
+        if: inputs.network == 'base_mainnet' && inputs.action_type == 'deploy' && inputs.contract == 'invoice_nft'
+        env:
+          DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
+          BASE_MAINNET_RPC: ${{ secrets.BASE_MAINNET_RPC }}
+          BASESCAN_API_KEY: ${{ secrets.BASESCAN_API_KEY }}
+        run: |
+          forge script script/DeployInvoiceNFTV2.s.sol:DeployInvoiceNFTV2 \
+            --rpc-url $BASE_MAINNET_RPC \
+            --broadcast \
+            --verify \
+            --delay 10
+
       - name: Save deployment artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: deployment-${{ inputs.network }}-${{ inputs.operation }}-${{ github.run_number }}
+          name: ${{ inputs.action_type }}-${{ inputs.contract }}-${{ inputs.network }}-${{ github.run_number }}
           path: |
             broadcast/
             deployments/
