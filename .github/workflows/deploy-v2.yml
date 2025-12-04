@@ -1,24 +1,47 @@
-name: Deploy V2 Components
+# InvoBase V2 Universal Deployment Workflow
+#
+# This workflow handles all V2 deployment scenarios:
+#
+# 1. upgrade_existing_proxy - RECOMMENDED FOR MAINNET
+#    - Upgrades existing InvoiceNFT proxy to V2
+#    - Preserves all existing invoices and data
+#    - Deploys InvoicePayment + PaymentLink
+#    - Use this to add payment features to existing contract
+#
+# 2. deploy_new_full_v2
+#    - Fresh deployment of complete V2 system
+#    - New proxy + InvoicePayment + PaymentLink
+#    - Use for testing or separate instances
+#
+# 3. deploy_payment_processor_only
+#    - Deploys only InvoicePayment contract
+#    - Requires existing V2 proxy
+#
+# 4. deploy_payment_link_only
+#    - Deploys only PaymentLink contract
+#    - Requires existing V2 proxy + InvoicePayment
+
+name: InvoBase V2 Deployment
 
 on:
   workflow_dispatch:
     inputs:
       network:
-        description: 'Network to deploy to'
+        description: 'Network'
         required: true
         type: choice
         options:
           - base_sepolia
           - base_mainnet
       operation:
-        description: 'Deployment operation'
+        description: 'Operation'
         required: true
         type: choice
         options:
-          - upgrade_to_v2
-          - deploy_v2_full
-          - deploy_payment_processor
-          - deploy_payment_link
+          - upgrade_existing_proxy
+          - deploy_new_full_v2
+          - deploy_payment_processor_only
+          - deploy_payment_link_only
 
 jobs:
   deploy:
@@ -38,9 +61,11 @@ jobs:
       - name: Build contracts
         run: forge build --force
 
-      # Upgrade existing proxy to V2
-      - name: Upgrade to V2 (Sepolia)
-        if: inputs.network == 'base_sepolia' && inputs.operation == 'upgrade_to_v2'
+      # ========================================
+      # UPGRADE EXISTING PROXY TO V2
+      # ========================================
+      - name: ⬆️ Upgrade Existing Proxy to V2 (Sepolia)
+        if: inputs.network == 'base_sepolia' && inputs.operation == 'upgrade_existing_proxy'
         env:
           DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
           BASE_SEPOLIA_RPC: ${{ secrets.BASE_SEPOLIA_RPC }}
@@ -52,8 +77,8 @@ jobs:
             --verify \
             --delay 10
 
-      - name: Upgrade to V2 (Mainnet)
-        if: inputs.network == 'base_mainnet' && inputs.operation == 'upgrade_to_v2'
+      - name: ⬆️ Upgrade Existing Proxy to V2 (Mainnet)
+        if: inputs.network == 'base_mainnet' && inputs.operation == 'upgrade_existing_proxy'
         env:
           DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
           BASE_MAINNET_RPC: ${{ secrets.BASE_MAINNET_RPC }}
@@ -65,9 +90,11 @@ jobs:
             --verify \
             --delay 10
 
-      # Deploy full V2 (new deployment)
-      - name: Deploy V2 Full (Sepolia)
-        if: inputs.network == 'base_sepolia' && inputs.operation == 'deploy_v2_full'
+      # ========================================
+      # DEPLOY NEW FULL V2 (Fresh deployment with new proxy)
+      # ========================================
+      - name: 🚀 Deploy New Full V2 (Sepolia)
+        if: inputs.network == 'base_sepolia' && inputs.operation == 'deploy_new_full_v2'
         env:
           DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
           BASE_SEPOLIA_RPC: ${{ secrets.BASE_SEPOLIA_RPC }}
@@ -79,8 +106,8 @@ jobs:
             --verify \
             --delay 10
 
-      - name: Deploy V2 Full (Mainnet)
-        if: inputs.network == 'base_mainnet' && inputs.operation == 'deploy_v2_full'
+      - name: 🚀 Deploy New Full V2 (Mainnet)
+        if: inputs.network == 'base_mainnet' && inputs.operation == 'deploy_new_full_v2'
         env:
           DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
           BASE_MAINNET_RPC: ${{ secrets.BASE_MAINNET_RPC }}
@@ -92,9 +119,11 @@ jobs:
             --verify \
             --delay 10
 
-      # Deploy only Payment Processor
-      - name: Deploy Payment Processor (Sepolia)
-        if: inputs.network == 'base_sepolia' && inputs.operation == 'deploy_payment_processor'
+      # ========================================
+      # DEPLOY PAYMENT PROCESSOR ONLY
+      # ========================================
+      - name: 💳 Deploy Payment Processor Only (Sepolia)
+        if: inputs.network == 'base_sepolia' && inputs.operation == 'deploy_payment_processor_only'
         env:
           DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
           BASE_SEPOLIA_RPC: ${{ secrets.BASE_SEPOLIA_RPC }}
@@ -106,8 +135,8 @@ jobs:
             --verify \
             --delay 10
 
-      - name: Deploy Payment Processor (Mainnet)
-        if: inputs.network == 'base_mainnet' && inputs.operation == 'deploy_payment_processor'
+      - name: 💳 Deploy Payment Processor Only (Mainnet)
+        if: inputs.network == 'base_mainnet' && inputs.operation == 'deploy_payment_processor_only'
         env:
           DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
           BASE_MAINNET_RPC: ${{ secrets.BASE_MAINNET_RPC }}
@@ -119,9 +148,11 @@ jobs:
             --verify \
             --delay 10
 
-      # Deploy only Payment Link
-      - name: Deploy Payment Link (Sepolia)
-        if: inputs.network == 'base_sepolia' && inputs.operation == 'deploy_payment_link'
+      # ========================================
+      # DEPLOY PAYMENT LINK ONLY
+      # ========================================
+      - name: 🔗 Deploy Payment Link Only (Sepolia)
+        if: inputs.network == 'base_sepolia' && inputs.operation == 'deploy_payment_link_only'
         env:
           DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
           BASE_SEPOLIA_RPC: ${{ secrets.BASE_SEPOLIA_RPC }}
@@ -133,8 +164,8 @@ jobs:
             --verify \
             --delay 10
 
-      - name: Deploy Payment Link (Mainnet)
-        if: inputs.network == 'base_mainnet' && inputs.operation == 'deploy_payment_link'
+      - name: 🔗 Deploy Payment Link Only (Mainnet)
+        if: inputs.network == 'base_mainnet' && inputs.operation == 'deploy_payment_link_only'
         env:
           DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
           BASE_MAINNET_RPC: ${{ secrets.BASE_MAINNET_RPC }}
