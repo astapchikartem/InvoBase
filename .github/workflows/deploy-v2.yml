@@ -1,0 +1,155 @@
+name: Deploy V2 Components
+
+on:
+  workflow_dispatch:
+    inputs:
+      network:
+        description: 'Network to deploy to'
+        required: true
+        type: choice
+        options:
+          - base_sepolia
+          - base_mainnet
+      operation:
+        description: 'Deployment operation'
+        required: true
+        type: choice
+        options:
+          - upgrade_to_v2
+          - deploy_v2_full
+          - deploy_payment_processor
+          - deploy_payment_link
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - name: Install dependencies
+        run: |
+          forge install foundry-rs/forge-std@v1.7.0 --no-git
+          forge install OpenZeppelin/openzeppelin-contracts@v5.0.2 --no-git
+          forge install OpenZeppelin/openzeppelin-contracts-upgradeable@v5.0.2 --no-git
+
+      - name: Build contracts
+        run: forge build --force
+
+      # Upgrade existing proxy to V2
+      - name: Upgrade to V2 (Sepolia)
+        if: inputs.network == 'base_sepolia' && inputs.operation == 'upgrade_to_v2'
+        env:
+          DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
+          BASE_SEPOLIA_RPC: ${{ secrets.BASE_SEPOLIA_RPC }}
+          BASESCAN_API_KEY: ${{ secrets.BASESCAN_API_KEY }}
+        run: |
+          forge script script/UpgradeToV2.s.sol:UpgradeToV2Sepolia \
+            --rpc-url $BASE_SEPOLIA_RPC \
+            --broadcast \
+            --verify \
+            --delay 10
+
+      - name: Upgrade to V2 (Mainnet)
+        if: inputs.network == 'base_mainnet' && inputs.operation == 'upgrade_to_v2'
+        env:
+          DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
+          BASE_MAINNET_RPC: ${{ secrets.BASE_MAINNET_RPC }}
+          BASESCAN_API_KEY: ${{ secrets.BASESCAN_API_KEY }}
+        run: |
+          forge script script/UpgradeToV2.s.sol:UpgradeToV2Mainnet \
+            --rpc-url $BASE_MAINNET_RPC \
+            --broadcast \
+            --verify \
+            --delay 10
+
+      # Deploy full V2 (new deployment)
+      - name: Deploy V2 Full (Sepolia)
+        if: inputs.network == 'base_sepolia' && inputs.operation == 'deploy_v2_full'
+        env:
+          DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
+          BASE_SEPOLIA_RPC: ${{ secrets.BASE_SEPOLIA_RPC }}
+          BASESCAN_API_KEY: ${{ secrets.BASESCAN_API_KEY }}
+        run: |
+          forge script script/DeployInvoiceNFTV2.s.sol:DeployInvoiceNFTV2 \
+            --rpc-url $BASE_SEPOLIA_RPC \
+            --broadcast \
+            --verify \
+            --delay 10
+
+      - name: Deploy V2 Full (Mainnet)
+        if: inputs.network == 'base_mainnet' && inputs.operation == 'deploy_v2_full'
+        env:
+          DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
+          BASE_MAINNET_RPC: ${{ secrets.BASE_MAINNET_RPC }}
+          BASESCAN_API_KEY: ${{ secrets.BASESCAN_API_KEY }}
+        run: |
+          forge script script/DeployInvoiceNFTV2.s.sol:DeployInvoiceNFTV2 \
+            --rpc-url $BASE_MAINNET_RPC \
+            --broadcast \
+            --verify \
+            --delay 10
+
+      # Deploy only Payment Processor
+      - name: Deploy Payment Processor (Sepolia)
+        if: inputs.network == 'base_sepolia' && inputs.operation == 'deploy_payment_processor'
+        env:
+          DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
+          BASE_SEPOLIA_RPC: ${{ secrets.BASE_SEPOLIA_RPC }}
+          BASESCAN_API_KEY: ${{ secrets.BASESCAN_API_KEY }}
+        run: |
+          forge script script/DeployV2Components.s.sol:DeployPaymentProcessorSepolia \
+            --rpc-url $BASE_SEPOLIA_RPC \
+            --broadcast \
+            --verify \
+            --delay 10
+
+      - name: Deploy Payment Processor (Mainnet)
+        if: inputs.network == 'base_mainnet' && inputs.operation == 'deploy_payment_processor'
+        env:
+          DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
+          BASE_MAINNET_RPC: ${{ secrets.BASE_MAINNET_RPC }}
+          BASESCAN_API_KEY: ${{ secrets.BASESCAN_API_KEY }}
+        run: |
+          forge script script/DeployV2Components.s.sol:DeployPaymentProcessorMainnet \
+            --rpc-url $BASE_MAINNET_RPC \
+            --broadcast \
+            --verify \
+            --delay 10
+
+      # Deploy only Payment Link
+      - name: Deploy Payment Link (Sepolia)
+        if: inputs.network == 'base_sepolia' && inputs.operation == 'deploy_payment_link'
+        env:
+          DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
+          BASE_SEPOLIA_RPC: ${{ secrets.BASE_SEPOLIA_RPC }}
+          BASESCAN_API_KEY: ${{ secrets.BASESCAN_API_KEY }}
+        run: |
+          forge script script/DeployV2Components.s.sol:DeployPaymentLinkSepolia \
+            --rpc-url $BASE_SEPOLIA_RPC \
+            --broadcast \
+            --verify \
+            --delay 10
+
+      - name: Deploy Payment Link (Mainnet)
+        if: inputs.network == 'base_mainnet' && inputs.operation == 'deploy_payment_link'
+        env:
+          DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
+          BASE_MAINNET_RPC: ${{ secrets.BASE_MAINNET_RPC }}
+          BASESCAN_API_KEY: ${{ secrets.BASESCAN_API_KEY }}
+        run: |
+          forge script script/DeployV2Components.s.sol:DeployPaymentLinkMainnet \
+            --rpc-url $BASE_MAINNET_RPC \
+            --broadcast \
+            --verify \
+            --delay 10
+
+      - name: Save deployment artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-${{ inputs.network }}-${{ inputs.operation }}-${{ github.run_number }}
+          path: |
+            broadcast/
+            deployments/
