@@ -65,6 +65,17 @@ contract InvoicePayment is ReentrancyGuard, Ownable {
         uint256 amount
     );
 
+    event PaymentReleased(
+        uint256 indexed invoiceId,
+        address indexed recipient,
+        uint256 amount
+    );
+
+    event TokenSupportChanged(
+        address indexed token,
+        bool supported
+    );
+
     error InvoiceNotFound();
     error InvoiceAlreadyPaid();
     error InvoiceCancelled();
@@ -74,6 +85,8 @@ contract InvoicePayment is ReentrancyGuard, Ownable {
     error RefundFailed();
     error Unauthorized();
     error InvalidPaymentRef();
+    error NoPaymentToRelease();
+    error InvalidStatus();
 
     constructor(address _invoiceNFT, address initialOwner) Ownable(initialOwner) {
         invoiceNFT = IInvoiceNFT(_invoiceNFT);
@@ -81,6 +94,7 @@ contract InvoicePayment is ReentrancyGuard, Ownable {
 
     function setSupportedToken(address token, bool supported) external onlyOwner {
         supportedTokens[token] = supported;
+        emit TokenSupportChanged(token, supported);
     }
 
     function setPartialPaymentAllowed(uint256 invoiceId, bool allowed) external {
@@ -105,8 +119,6 @@ contract InvoicePayment is ReentrancyGuard, Ownable {
             paidBy: msg.sender,
             paymentRef: bytes32(0)
         });
-
-        payable(invoice.issuer).transfer(msg.value);
 
         emit InvoicePaymentReceived(invoiceId, msg.sender, address(0), msg.value);
     }
@@ -134,7 +146,7 @@ contract InvoicePayment is ReentrancyGuard, Ownable {
             paymentRef: bytes32(0)
         });
 
-        IERC20(token).safeTransferFrom(msg.sender, invoice.issuer, amount);
+        IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
 
         emit InvoicePaymentReceived(invoiceId, msg.sender, token, amount);
     }
@@ -160,11 +172,11 @@ contract InvoicePayment is ReentrancyGuard, Ownable {
         uint256 remaining = invoice.amount - totalPaid;
 
         if (msg.value > 0) {
-            payable(invoice.issuer).transfer(msg.value);
+            // ETH payment - held in contract
         } else {
             address token = payments[invoiceId].token;
             if (token == address(0)) revert TokenNotSupported();
-            IERC20(token).safeTransferFrom(msg.sender, invoice.issuer, amount);
+            IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
         }
 
         if (remaining == 0) {
@@ -213,16 +225,37 @@ contract InvoicePayment is ReentrancyGuard, Ownable {
         emit ExternalPaymentRecorded(invoiceId, paymentRef, invoice.amount);
     }
 
+    function releasePayment(uint256 invoiceId) external nonReentrant {
+        PaymentInfo memory payment = payments[invoiceId];
+        IInvoiceNFT.Invoice memory invoice = invoiceNFT.getInvoice(invoiceId);
+
+        if (invoice.issuer != msg.sender) revert Unauthorized();
+        if (payment.amountPaid == 0) revert NoPaymentToRelease();
+        if (invoice.status != 2) revert InvalidStatus();
+
+        uint256 releaseAmount = payment.amountPaid;
+
+        if (payment.token == address(0)) {
+            (bool success, ) = payable(invoice.issuer).call{value: releaseAmount}("");
+            if (!success) revert RefundFailed();
+        } else {
+            IERC20(payment.token).safeTransfer(invoice.issuer, releaseAmount);
+        }
+
+        emit PaymentReleased(invoiceId, invoice.issuer, releaseAmount);
+    }
+
     function refund(uint256 invoiceId) external nonReentrant {
         PaymentInfo memory payment = payments[invoiceId];
         IInvoiceNFT.Invoice memory invoice = invoiceNFT.getInvoice(invoiceId);
 
         if (invoice.issuer != msg.sender) revert Unauthorized();
         if (payment.amountPaid == 0) revert InvoiceNotFound();
-        if (invoice.status != 3) revert InvoiceCancelled();
+        if (invoice.status != 3) revert InvalidStatus();
 
         uint256 refundAmount = payment.amountPaid;
         delete payments[invoiceId];
+        delete partialPaid[invoiceId];
 
         if (payment.token == address(0)) {
             (bool success, ) = payable(payment.paidBy).call{value: refundAmount}("");
