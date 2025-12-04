@@ -13,13 +13,13 @@ InvoBase V2 enables freelancers, teams, DAOs, and businesses to issue, track, an
 │                    InvoiceNFT V2                         │
 │                  (UUPS Upgradeable)                      │
 ├──────────────────────────────────────────────────────────┤
-│  Lifecycle: Draft → Issued → Paid → Cancelled           │
-│  • mint(payer, amount, dueDate)                         │
-│  • mintWithToken(payer, amount, dueDate, token, memo)  │
-│  • issue(tokenId)                                       │
-│  • cancel(tokenId)                                      │
-│  • pay(tokenId) / payWithToken(tokenId, amount)        │
-│  • getPaymentStatus(tokenId)                           │
+│  Lifecycle: Draft → Issued → Paid → Cancelled            │
+│  • mint(payer, amount, dueDate)                          │
+│  • mintWithToken(payer, amount, dueDate, token, memo)    │
+│  • issue(tokenId)                                        │
+│  • cancel(tokenId)                                       │
+│  • pay(tokenId) / payWithToken(tokenId, amount)          │
+│  • getPaymentStatus(tokenId)                             │
 └────────────┬─────────────────────────────────────────────┘
              │
              │ integrates with
@@ -29,17 +29,17 @@ InvoBase V2 enables freelancers, teams, DAOs, and businesses to issue, track, an
 │                  (Escrow Contract)                       │
 ├──────────────────────────────────────────────────────────┤
 │  Payment Processing:                                     │
-│  • payInvoice(invoiceId) - ETH payment                  │
-│  • payInvoiceToken(invoiceId, token, amount)           │
-│  • payInvoicePartial(invoiceId, amount)                │
-│  • releasePayment(invoiceId) - issuer claims funds     │
-│  • refund(invoiceId) - refund if cancelled             │
-│  • recordExternalPayment(invoiceId, ref)               │
+│  • payInvoice(invoiceId) - ETH payment                   │
+│  • payInvoiceToken(invoiceId, token, amount)             │
+│  • payInvoicePartial(invoiceId, amount)                  │
+│  • releasePayment(invoiceId) - issuer claims funds       │
+│  • refund(invoiceId) - refund if cancelled               │
+│  • recordExternalPayment(invoiceId, ref)                 │
 │                                                          │
-│  Escrow Model:                                          │
-│  • Funds held in contract until release/refund         │
-│  • Automatic status updates on payment                 │
-│  • Support for ETH and ERC20 tokens (USDC)             │
+│  Escrow Model:                                           │
+│  • Funds held in contract until release/refund           │
+│  • Automatic status updates on payment                   │
+│  • Support for ETH and ERC20 tokens (USDC)               │
 └────────────┬─────────────────────────────────────────────┘
              │
              │ used by
@@ -49,15 +49,15 @@ InvoBase V2 enables freelancers, teams, DAOs, and businesses to issue, track, an
 │              (Shareable Payment URLs)                    │
 ├──────────────────────────────────────────────────────────┤
 │  Link Management:                                        │
-│  • generateLink(invoiceId, expiry) → linkId            │
-│  • payViaLink(linkId) - pay with ETH                   │
-│  • payViaLinkToken(linkId, token, amount)              │
-│  • isLinkValid(linkId)                                 │
+│  • generateLink(invoiceId, expiry) → linkId              │
+│  • payViaLink(linkId) - pay with ETH                     │
+│  • payViaLinkToken(linkId, token, amount)                │
+│  • isLinkValid(linkId)                                   │
 │                                                          │
-│  Features:                                              │
-│  • Expiry-based validation                             │
-│  • One-time use enforcement                            │
-│  • Pay from any address                                │
+│  Features:                                               │
+│  • Expiry-based validation                               │
+│  • One-time use enforcement                              │
+│  • Pay from any address                                  │
 └──────────────────────────────────────────────────────────┘
 ```
 
