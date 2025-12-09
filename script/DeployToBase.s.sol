@@ -31,12 +31,7 @@ contract DeployToBaseSepolia is Script {
         _saveDeployment("base-sepolia", address(proxy), address(implementation), deployer);
     }
 
-    function _saveDeployment(
-        string memory network,
-        address proxy,
-        address implementation,
-        address deployer
-    ) internal {
+    function _saveDeployment(string memory network, address proxy, address implementation, address deployer) internal {
         string memory root = vm.projectRoot();
         string memory path = string.concat(root, "/deployments/", network, ".json");
 
@@ -77,12 +72,7 @@ contract DeployToBaseMainnet is Script {
         _saveDeployment("base-mainnet", address(proxy), address(implementation), deployer);
     }
 
-    function _saveDeployment(
-        string memory network,
-        address proxy,
-        address implementation,
-        address deployer
-    ) internal {
+    function _saveDeployment(string memory network, address proxy, address implementation, address deployer) internal {
         string memory root = vm.projectRoot();
         string memory path = string.concat(root, "/deployments/", network, ".json");
 

@@ -41,25 +41,12 @@ contract PaymentLink is ReentrancyGuard, Ownable {
     mapping(uint256 => bytes32) public invoiceToLink;
     uint256 private _nonce;
 
-    event LinkGenerated(
-        uint256 indexed invoiceId,
-        bytes32 indexed linkId,
-        uint256 expiry
-    );
+    event LinkGenerated(uint256 indexed invoiceId, bytes32 indexed linkId, uint256 expiry);
 
-    event LinkPaymentReceived(
-        bytes32 indexed linkId,
-        uint256 indexed invoiceId,
-        address indexed payer,
-        uint256 amount
-    );
+    event LinkPaymentReceived(bytes32 indexed linkId, uint256 indexed invoiceId, address indexed payer, uint256 amount);
 
     event LinkPaymentWithTokenReceived(
-        bytes32 indexed linkId,
-        uint256 indexed invoiceId,
-        address indexed payer,
-        address token,
-        uint256 amount
+        bytes32 indexed linkId, uint256 indexed invoiceId, address indexed payer, address token, uint256 amount
     );
 
     error LinkExpired();
@@ -68,30 +55,18 @@ contract PaymentLink is ReentrancyGuard, Ownable {
     error InsufficientPayment();
     error Unauthorized();
 
-    constructor(
-        address _paymentProcessor,
-        address _invoiceNFT,
-        address initialOwner
-    ) Ownable(initialOwner) {
+    constructor(address _paymentProcessor, address _invoiceNFT, address initialOwner) Ownable(initialOwner) {
         paymentProcessor = IInvoicePaymentForLink(_paymentProcessor);
         invoiceNFT = IInvoiceNFTForLink(_invoiceNFT);
     }
 
-    function generateLink(
-        uint256 invoiceId,
-        uint256 expiry
-    ) external returns (bytes32 linkId) {
+    function generateLink(uint256 invoiceId, uint256 expiry) external returns (bytes32 linkId) {
         IInvoiceNFTForLink.Invoice memory invoice = invoiceNFT.getInvoice(invoiceId);
         if (invoice.issuer != msg.sender) revert Unauthorized();
 
         linkId = keccak256(abi.encodePacked(invoiceId, msg.sender, block.timestamp, _nonce++));
 
-        links[linkId] = PaymentLink({
-            invoiceId: invoiceId,
-            linkId: linkId,
-            expiry: expiry,
-            used: false
-        });
+        links[linkId] = PaymentLink({invoiceId: invoiceId, linkId: linkId, expiry: expiry, used: false});
 
         invoiceToLink[invoiceId] = linkId;
 
@@ -117,11 +92,7 @@ contract PaymentLink is ReentrancyGuard, Ownable {
         emit LinkPaymentReceived(linkId, link.invoiceId, msg.sender, msg.value);
     }
 
-    function payViaLinkToken(
-        bytes32 linkId,
-        address token,
-        uint256 amount
-    ) external nonReentrant {
+    function payViaLinkToken(bytes32 linkId, address token, uint256 amount) external nonReentrant {
         PaymentLink storage link = links[linkId];
 
         if (link.linkId == bytes32(0)) revert LinkNotFound();

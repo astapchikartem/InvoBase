@@ -48,9 +48,7 @@ contract DeployPaymentProcessorSepolia is Script {
 
     function _saveComponent(string memory network, string memory component, address contractAddress) internal {
         string memory root = vm.projectRoot();
-        string memory path = string.concat(
-            root, "/deployments/", network, "-", component, ".json"
-        );
+        string memory path = string.concat(root, "/deployments/", network, "-", component, ".json");
 
         string memory json = "deployment";
         json.serialize("network", network);
@@ -98,9 +96,7 @@ contract DeployPaymentProcessorMainnet is Script {
 
     function _saveComponent(string memory network, string memory component, address contractAddress) internal {
         string memory root = vm.projectRoot();
-        string memory path = string.concat(
-            root, "/deployments/", network, "-", component, ".json"
-        );
+        string memory path = string.concat(root, "/deployments/", network, "-", component, ".json");
 
         string memory json = "deployment";
         json.serialize("network", network);
@@ -135,11 +131,7 @@ contract DeployPaymentLinkSepolia is Script {
 
         vm.startBroadcast(deployerPrivateKey);
 
-        PaymentLink paymentLink = new PaymentLink(
-            paymentProcessorAddress,
-            proxyAddress,
-            deployer
-        );
+        PaymentLink paymentLink = new PaymentLink(paymentProcessorAddress, proxyAddress, deployer);
         console.log("PaymentLink deployed:", address(paymentLink));
 
         vm.stopBroadcast();
@@ -149,9 +141,7 @@ contract DeployPaymentLinkSepolia is Script {
 
     function _saveComponent(string memory network, string memory component, address contractAddress) internal {
         string memory root = vm.projectRoot();
-        string memory path = string.concat(
-            root, "/deployments/", network, "-", component, ".json"
-        );
+        string memory path = string.concat(root, "/deployments/", network, "-", component, ".json");
 
         string memory json = "deployment";
         json.serialize("network", network);
@@ -185,11 +175,7 @@ contract DeployPaymentLinkMainnet is Script {
 
         vm.startBroadcast(deployerPrivateKey);
 
-        PaymentLink paymentLink = new PaymentLink(
-            paymentProcessorAddress,
-            proxyAddress,
-            deployer
-        );
+        PaymentLink paymentLink = new PaymentLink(paymentProcessorAddress, proxyAddress, deployer);
         console.log("PaymentLink deployed:", address(paymentLink));
 
         vm.stopBroadcast();
@@ -199,9 +185,7 @@ contract DeployPaymentLinkMainnet is Script {
 
     function _saveComponent(string memory network, string memory component, address contractAddress) internal {
         string memory root = vm.projectRoot();
-        string memory path = string.concat(
-            root, "/deployments/", network, "-", component, ".json"
-        );
+        string memory path = string.concat(root, "/deployments/", network, "-", component, ".json");
 
         string memory json = "deployment";
         json.serialize("network", network);

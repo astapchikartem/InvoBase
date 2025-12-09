@@ -34,7 +34,7 @@ contract InvoiceNFTv1Test is Test {
         assertEq(invoice.issuer, issuer);
         assertEq(invoice.payer, payer);
         assertEq(invoice.amount, 1000e6);
-        assertEq(uint(invoice.status), uint(InvoiceNFT.InvoiceStatus.Draft));
+        assertEq(uint256(invoice.status), uint256(InvoiceNFT.InvoiceStatus.Draft));
 
         vm.stopPrank();
     }
@@ -46,7 +46,7 @@ contract InvoiceNFTv1Test is Test {
         nft.issue(tokenId);
 
         InvoiceNFT.Invoice memory invoice = nft.getInvoice(tokenId);
-        assertEq(uint(invoice.status), uint(InvoiceNFT.InvoiceStatus.Issued));
+        assertEq(uint256(invoice.status), uint256(InvoiceNFT.InvoiceStatus.Issued));
 
         vm.stopPrank();
     }
@@ -63,7 +63,7 @@ contract InvoiceNFTv1Test is Test {
         nft.markPaid(tokenId);
 
         InvoiceNFT.Invoice memory invoice = nft.getInvoice(tokenId);
-        assertEq(uint(invoice.status), uint(InvoiceNFT.InvoiceStatus.Paid));
+        assertEq(uint256(invoice.status), uint256(InvoiceNFT.InvoiceStatus.Paid));
     }
 
     function testCancel() public {
@@ -73,7 +73,7 @@ contract InvoiceNFTv1Test is Test {
         nft.cancel(tokenId);
 
         InvoiceNFT.Invoice memory invoice = nft.getInvoice(tokenId);
-        assertEq(uint(invoice.status), uint(InvoiceNFT.InvoiceStatus.Cancelled));
+        assertEq(uint256(invoice.status), uint256(InvoiceNFT.InvoiceStatus.Cancelled));
 
         vm.stopPrank();
     }

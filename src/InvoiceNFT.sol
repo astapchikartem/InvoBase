@@ -39,11 +39,7 @@ contract InvoiceNFT is ERC721Upgradeable, OwnableUpgradeable, UUPSUpgradeable {
         _nextTokenId = 1;
     }
 
-    function mint(
-        address payer,
-        uint256 amount,
-        uint256 dueDate
-    ) external returns (uint256) {
+    function mint(address payer, uint256 amount, uint256 dueDate) external returns (uint256) {
         uint256 tokenId = _nextTokenId++;
 
         _invoices[tokenId] = Invoice({

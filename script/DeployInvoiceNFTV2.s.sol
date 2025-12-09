@@ -9,12 +9,15 @@ import {PaymentLink} from "../src/PaymentLink.sol";
 import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 
 contract DeployInvoiceNFTV2 is Script {
-    function run() external returns (
-        address proxyAddress,
-        address implementationAddress,
-        address paymentProcessorAddress,
-        address paymentLinkAddress
-    ) {
+    function run()
+        external
+        returns (
+            address proxyAddress,
+            address implementationAddress,
+            address paymentProcessorAddress,
+            address paymentLinkAddress
+        )
+    {
         uint256 deployerPrivateKey = vm.envUint("DEPLOYER_PRIVATE_KEY");
         address deployer = vm.addr(deployerPrivateKey);
 
@@ -39,11 +42,7 @@ contract DeployInvoiceNFTV2 is Script {
         console.log("InvoiceNFTV2 initialized with payment processor");
 
         // Deploy PaymentLink
-        paymentLinkAddress = address(new PaymentLink(
-            paymentProcessorAddress,
-            proxyAddress,
-            deployer
-        ));
+        paymentLinkAddress = address(new PaymentLink(paymentProcessorAddress, proxyAddress, deployer));
         console.log("PaymentLink deployed at:", paymentLinkAddress);
 
         // Set up supported tokens

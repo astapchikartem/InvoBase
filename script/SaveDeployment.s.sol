@@ -8,12 +8,7 @@ import {stdJson} from "forge-std/StdJson.sol";
 contract SaveDeployment is Script {
     using stdJson for string;
 
-    function saveDeployment(
-        string memory network,
-        address proxy,
-        address implementation,
-        address deployer
-    ) public {
+    function saveDeployment(string memory network, address proxy, address implementation, address deployer) public {
         string memory root = vm.projectRoot();
         string memory path = string.concat(root, "/deployments/", network, ".json");
 

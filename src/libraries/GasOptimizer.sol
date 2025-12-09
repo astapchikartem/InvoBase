@@ -10,12 +10,11 @@ library GasOptimizer {
     /// @param dueDate Due date timestamp (4 bytes)
     /// @param paidAt Payment timestamp (4 bytes)
     /// @return packed Packed uint256 value
-    function packInvoiceData(
-        uint8 status,
-        uint32 createdAt,
-        uint32 dueDate,
-        uint32 paidAt
-    ) internal pure returns (uint256 packed) {
+    function packInvoiceData(uint8 status, uint32 createdAt, uint32 dueDate, uint32 paidAt)
+        internal
+        pure
+        returns (uint256 packed)
+    {
         packed = uint256(status);
         packed |= uint256(createdAt) << 8;
         packed |= uint256(dueDate) << 40;

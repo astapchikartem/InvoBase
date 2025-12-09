@@ -41,42 +41,17 @@ contract InvoicePayment is ReentrancyGuard, Ownable {
     mapping(uint256 => uint256) public partialPaid;
     mapping(address => bool) public supportedTokens;
 
-    event InvoicePaymentReceived(
-        uint256 indexed invoiceId,
-        address indexed payer,
-        address token,
-        uint256 amount
-    );
+    event InvoicePaymentReceived(uint256 indexed invoiceId, address indexed payer, address token, uint256 amount);
 
-    event PartialPaymentReceived(
-        uint256 indexed invoiceId,
-        address indexed payer,
-        uint256 amount,
-        uint256 remaining
-    );
+    event PartialPaymentReceived(uint256 indexed invoiceId, address indexed payer, uint256 amount, uint256 remaining);
 
-    event PaymentRefunded(
-        uint256 indexed invoiceId,
-        address indexed recipient,
-        uint256 amount
-    );
+    event PaymentRefunded(uint256 indexed invoiceId, address indexed recipient, uint256 amount);
 
-    event ExternalPaymentRecorded(
-        uint256 indexed invoiceId,
-        bytes32 indexed paymentRef,
-        uint256 amount
-    );
+    event ExternalPaymentRecorded(uint256 indexed invoiceId, bytes32 indexed paymentRef, uint256 amount);
 
-    event PaymentReleased(
-        uint256 indexed invoiceId,
-        address indexed recipient,
-        uint256 amount
-    );
+    event PaymentReleased(uint256 indexed invoiceId, address indexed recipient, uint256 amount);
 
-    event TokenSupportChanged(
-        address indexed token,
-        bool supported
-    );
+    event TokenSupportChanged(address indexed token, bool supported);
 
     error InvoiceNotFound();
     error InvoiceAlreadyPaid();
@@ -99,7 +74,6 @@ contract InvoicePayment is ReentrancyGuard, Ownable {
         supportedTokens[token] = supported;
         emit TokenSupportChanged(token, supported);
     }
-
 
     function payInvoice(uint256 invoiceId) external payable nonReentrant {
         IInvoiceNFT.Invoice memory invoice = invoiceNFT.getInvoice(invoiceId);
@@ -124,11 +98,7 @@ contract InvoicePayment is ReentrancyGuard, Ownable {
         emit InvoicePaymentReceived(invoiceId, msg.sender, address(0), msg.value);
     }
 
-    function payInvoiceToken(
-        uint256 invoiceId,
-        address token,
-        uint256 amount
-    ) external nonReentrant {
+    function payInvoiceToken(uint256 invoiceId, address token, uint256 amount) external nonReentrant {
         if (!supportedTokens[token]) revert TokenNotSupported();
 
         IInvoiceNFT.Invoice memory invoice = invoiceNFT.getInvoice(invoiceId);
@@ -155,10 +125,7 @@ contract InvoicePayment is ReentrancyGuard, Ownable {
         emit InvoicePaymentReceived(invoiceId, msg.sender, token, amount);
     }
 
-    function payInvoicePartial(
-        uint256 invoiceId,
-        uint256 amount
-    ) external payable nonReentrant {
+    function payInvoicePartial(uint256 invoiceId, uint256 amount) external payable nonReentrant {
         if (!invoiceNFT.partialPaymentAllowed(invoiceId)) revert PartialPaymentNotAllowed();
 
         IInvoiceNFT.Invoice memory invoice = invoiceNFT.getInvoice(invoiceId);
@@ -196,20 +163,14 @@ contract InvoicePayment is ReentrancyGuard, Ownable {
             invoiceNFT.markAsPaid(invoiceId);
 
             emit InvoicePaymentReceived(
-                invoiceId,
-                msg.sender,
-                msg.value > 0 ? address(0) : payments[invoiceId].token,
-                totalPaid
+                invoiceId, msg.sender, msg.value > 0 ? address(0) : payments[invoiceId].token, totalPaid
             );
         } else {
             emit PartialPaymentReceived(invoiceId, msg.sender, paymentAmount, remaining);
         }
     }
 
-    function recordExternalPayment(
-        uint256 invoiceId,
-        bytes32 paymentRef
-    ) external {
+    function recordExternalPayment(uint256 invoiceId, bytes32 paymentRef) external {
         if (paymentRef == bytes32(0)) revert InvalidPaymentRef();
 
         IInvoiceNFT.Invoice memory invoice = invoiceNFT.getInvoice(invoiceId);
@@ -244,7 +205,7 @@ contract InvoicePayment is ReentrancyGuard, Ownable {
         uint256 releaseAmount = payment.amountPaid;
 
         if (payment.token == address(0)) {
-            (bool success, ) = payable(invoice.issuer).call{value: releaseAmount}("");
+            (bool success,) = payable(invoice.issuer).call{value: releaseAmount}("");
             if (!success) revert RefundFailed();
         } else {
             IERC20(payment.token).safeTransfer(invoice.issuer, releaseAmount);
@@ -266,7 +227,7 @@ contract InvoicePayment is ReentrancyGuard, Ownable {
         delete partialPaid[invoiceId];
 
         if (payment.token == address(0)) {
-            (bool success, ) = payable(payment.paidBy).call{value: refundAmount}("");
+            (bool success,) = payable(payment.paidBy).call{value: refundAmount}("");
             if (!success) revert RefundFailed();
         } else {
             IERC20(payment.token).safeTransfer(payment.paidBy, refundAmount);
@@ -288,8 +249,7 @@ contract InvoicePayment is ReentrancyGuard, Ownable {
     }
 
     function isPaid(uint256 invoiceId) external view returns (bool) {
-        return payments[invoiceId].amountPaid > 0 ||
-               partialPaid[invoiceId] >= invoiceNFT.getInvoice(invoiceId).amount;
+        return payments[invoiceId].amountPaid > 0 || partialPaid[invoiceId] >= invoiceNFT.getInvoice(invoiceId).amount;
     }
 
     receive() external payable {}

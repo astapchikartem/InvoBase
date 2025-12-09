@@ -45,11 +45,7 @@ contract UpgradeToV2Sepolia is Script {
         console.log("V2 initialized with payment processor");
 
         // Deploy PaymentLink
-        PaymentLink paymentLink = new PaymentLink(
-            address(paymentProcessor),
-            proxyAddress,
-            deployer
-        );
+        PaymentLink paymentLink = new PaymentLink(address(paymentProcessor), proxyAddress, deployer);
         console.log("PaymentLink deployed:", address(paymentLink));
 
         // Set supported tokens
@@ -134,11 +130,7 @@ contract UpgradeToV2Mainnet is Script {
         console.log("V2 initialized with payment processor");
 
         // Deploy PaymentLink
-        PaymentLink paymentLink = new PaymentLink(
-            address(paymentProcessor),
-            proxyAddress,
-            deployer
-        );
+        PaymentLink paymentLink = new PaymentLink(address(paymentProcessor), proxyAddress, deployer);
         console.log("PaymentLink deployed:", address(paymentLink));
 
         // Set supported tokens

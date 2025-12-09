@@ -26,13 +26,13 @@ contract TestInvoiceNFT is Script {
         console.log("Issuer:", invoice.issuer);
         console.log("Payer:", invoice.payer);
         console.log("Amount:", invoice.amount);
-        console.log("Status:", uint(invoice.status));
+        console.log("Status:", uint256(invoice.status));
 
         nft.issue(tokenId);
         console.log("Invoice issued");
 
         invoice = nft.getInvoice(tokenId);
-        console.log("New status:", uint(invoice.status));
+        console.log("New status:", uint256(invoice.status));
 
         console.log("All tests passed");
     }
