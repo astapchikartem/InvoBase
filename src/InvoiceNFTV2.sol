@@ -50,6 +50,9 @@ contract InvoiceNFTV2 is ERC721Upgradeable, OwnableUpgradeable, UUPSUpgradeable 
     error Unauthorized();
     error PaymentProcessorNotSet();
     error InvalidToken();
+    error InvalidTransition();
+    error AlreadyPaid();
+    error CannotCancelPaidInvoice();
 
     function initialize(address initialOwner) public initializer {
         __ERC721_init("InvoBase Invoice", "INVO");
@@ -120,7 +123,7 @@ contract InvoiceNFTV2 is ERC721Upgradeable, OwnableUpgradeable, UUPSUpgradeable 
     function issue(uint256 tokenId) external {
         Invoice storage invoice = _invoices[tokenId];
         if (invoice.issuer != msg.sender) revert Unauthorized();
-        if (invoice.status != InvoiceStatus.Draft) revert InvalidStatus();
+        if (invoice.status != InvoiceStatus.Draft) revert InvalidTransition();
 
         InvoiceStatus oldStatus = invoice.status;
         invoice.status = InvoiceStatus.Issued;
@@ -176,12 +179,20 @@ contract InvoiceNFTV2 is ERC721Upgradeable, OwnableUpgradeable, UUPSUpgradeable 
     function cancel(uint256 tokenId) external {
         Invoice storage invoice = _invoices[tokenId];
         if (invoice.issuer != msg.sender) revert Unauthorized();
-        if (invoice.status == InvoiceStatus.Paid) revert InvalidStatus();
+        if (invoice.status == InvoiceStatus.Paid) revert CannotCancelPaidInvoice();
+        if (invoice.status == InvoiceStatus.Cancelled) revert InvalidTransition();
 
         InvoiceStatus oldStatus = invoice.status;
         invoice.status = InvoiceStatus.Cancelled;
 
         emit StatusChanged(tokenId, oldStatus, InvoiceStatus.Cancelled);
+
+        if (paymentProcessor != address(0) && oldStatus == InvoiceStatus.Issued) {
+            (bool success, ) = paymentProcessor.call(
+                abi.encodeWithSignature("refund(uint256)", tokenId)
+            );
+            // Ignore refund failures if no payment exists
+        }
     }
 
     function getPaymentStatus(uint256 tokenId) external view returns (bool paid, uint256 remaining) {
@@ -216,6 +227,16 @@ contract InvoiceNFTV2 is ERC721Upgradeable, OwnableUpgradeable, UUPSUpgradeable 
                 emit StatusChanged(tokenId, oldStatus, InvoiceStatus.Paid);
             }
         }
+    }
+
+    function markAsPaid(uint256 tokenId) external {
+        if (msg.sender != paymentProcessor) revert Unauthorized();
+        Invoice storage invoice = _invoices[tokenId];
+        if (invoice.status != InvoiceStatus.Issued) revert InvalidTransition();
+
+        InvoiceStatus oldStatus = invoice.status;
+        invoice.status = InvoiceStatus.Paid;
+        emit StatusChanged(tokenId, oldStatus, InvoiceStatus.Paid);
     }
 
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}

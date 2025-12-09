@@ -110,9 +110,9 @@ contract PaymentLink is ReentrancyGuard, Ownable {
         IInvoiceNFTForLink.Invoice memory invoice = invoiceNFT.getInvoice(link.invoiceId);
         if (msg.value < invoice.amount) revert InsufficientPayment();
 
-        link.used = true;
-
         paymentProcessor.payInvoice{value: msg.value}(link.invoiceId);
+
+        link.used = true;
 
         emit LinkPaymentReceived(linkId, link.invoiceId, msg.sender, msg.value);
     }
@@ -131,12 +131,12 @@ contract PaymentLink is ReentrancyGuard, Ownable {
         IInvoiceNFTForLink.Invoice memory invoice = invoiceNFT.getInvoice(link.invoiceId);
         if (amount < invoice.amount) revert InsufficientPayment();
 
-        link.used = true;
-
         IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
         IERC20(token).approve(address(paymentProcessor), amount);
 
         paymentProcessor.payInvoiceToken(link.invoiceId, token, amount);
+
+        link.used = true;
 
         emit LinkPaymentWithTokenReceived(linkId, link.invoiceId, msg.sender, token, amount);
     }

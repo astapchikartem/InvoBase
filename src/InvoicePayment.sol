@@ -18,6 +18,8 @@ interface IInvoiceNFT {
 
     function getInvoice(uint256 tokenId) external view returns (Invoice memory);
     function ownerOf(uint256 tokenId) external view returns (address);
+    function markAsPaid(uint256 tokenId) external;
+    function partialPaymentAllowed(uint256 tokenId) external view returns (bool);
 }
 
 contract InvoicePayment is ReentrancyGuard, Ownable {
@@ -87,6 +89,7 @@ contract InvoicePayment is ReentrancyGuard, Ownable {
     error InvalidPaymentRef();
     error NoPaymentToRelease();
     error InvalidStatus();
+    error Overpayment();
 
     constructor(address _invoiceNFT, address initialOwner) Ownable(initialOwner) {
         invoiceNFT = IInvoiceNFT(_invoiceNFT);
@@ -97,11 +100,6 @@ contract InvoicePayment is ReentrancyGuard, Ownable {
         emit TokenSupportChanged(token, supported);
     }
 
-    function setPartialPaymentAllowed(uint256 invoiceId, bool allowed) external {
-        IInvoiceNFT.Invoice memory invoice = invoiceNFT.getInvoice(invoiceId);
-        if (invoice.issuer != msg.sender) revert Unauthorized();
-        acceptsPartial[invoiceId] = allowed;
-    }
 
     function payInvoice(uint256 invoiceId) external payable nonReentrant {
         IInvoiceNFT.Invoice memory invoice = invoiceNFT.getInvoice(invoiceId);
@@ -110,6 +108,7 @@ contract InvoicePayment is ReentrancyGuard, Ownable {
         if (invoice.status == 2) revert InvoiceAlreadyPaid();
         if (invoice.status == 3) revert InvoiceCancelled();
         if (msg.value < invoice.amount) revert InsufficientPayment();
+        if (msg.value > invoice.amount) revert Overpayment();
 
         payments[invoiceId] = PaymentInfo({
             invoiceId: invoiceId,
@@ -119,6 +118,8 @@ contract InvoicePayment is ReentrancyGuard, Ownable {
             paidBy: msg.sender,
             paymentRef: bytes32(0)
         });
+
+        invoiceNFT.markAsPaid(invoiceId);
 
         emit InvoicePaymentReceived(invoiceId, msg.sender, address(0), msg.value);
     }
@@ -136,6 +137,7 @@ contract InvoicePayment is ReentrancyGuard, Ownable {
         if (invoice.status == 2) revert InvoiceAlreadyPaid();
         if (invoice.status == 3) revert InvoiceCancelled();
         if (amount < invoice.amount) revert InsufficientPayment();
+        if (amount > invoice.amount) revert Overpayment();
 
         payments[invoiceId] = PaymentInfo({
             invoiceId: invoiceId,
@@ -148,6 +150,8 @@ contract InvoicePayment is ReentrancyGuard, Ownable {
 
         IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
 
+        invoiceNFT.markAsPaid(invoiceId);
+
         emit InvoicePaymentReceived(invoiceId, msg.sender, token, amount);
     }
 
@@ -155,7 +159,7 @@ contract InvoicePayment is ReentrancyGuard, Ownable {
         uint256 invoiceId,
         uint256 amount
     ) external payable nonReentrant {
-        if (!acceptsPartial[invoiceId]) revert PartialPaymentNotAllowed();
+        if (!invoiceNFT.partialPaymentAllowed(invoiceId)) revert PartialPaymentNotAllowed();
 
         IInvoiceNFT.Invoice memory invoice = invoiceNFT.getInvoice(invoiceId);
 
@@ -166,7 +170,7 @@ contract InvoicePayment is ReentrancyGuard, Ownable {
         uint256 paymentAmount = msg.value > 0 ? msg.value : amount;
         uint256 totalPaid = partialPaid[invoiceId] + paymentAmount;
 
-        if (totalPaid > invoice.amount) revert InsufficientPayment();
+        if (totalPaid > invoice.amount) revert Overpayment();
 
         partialPaid[invoiceId] = totalPaid;
         uint256 remaining = invoice.amount - totalPaid;
@@ -188,6 +192,8 @@ contract InvoicePayment is ReentrancyGuard, Ownable {
                 paidBy: msg.sender,
                 paymentRef: bytes32(0)
             });
+
+            invoiceNFT.markAsPaid(invoiceId);
 
             emit InvoicePaymentReceived(
                 invoiceId,
@@ -221,6 +227,8 @@ contract InvoicePayment is ReentrancyGuard, Ownable {
             paidBy: invoice.payer,
             paymentRef: paymentRef
         });
+
+        invoiceNFT.markAsPaid(invoiceId);
 
         emit ExternalPaymentRecorded(invoiceId, paymentRef, invoice.amount);
     }
