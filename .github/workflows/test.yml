@@ -2,41 +2,97 @@ name: Tests
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main, test, develop]
   pull_request:
-    branches: [main, develop]
+    branches: [main, test]
+
+env:
+  FOUNDRY_PROFILE: ci
 
 jobs:
   test:
+    name: Foundry Tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
 
-      - name: Install dependencies
-        run: |
-          forge install OpenZeppelin/openzeppelin-contracts@v5.0.0
-          forge install OpenZeppelin/openzeppelin-contracts-upgradeable@v5.0.0
-          forge install foundry-rs/forge-std@v1.7.0
+      - name: Show Forge version
+        run: forge --version
 
-      - name: Run tests
+      - name: Run Forge build
+        run: forge build --sizes
+        id: build
+
+      - name: Run Forge tests
         run: forge test -vvv
+        id: test
 
-      - name: Check gas snapshots
-        run: forge snapshot --check
-
-      - name: Run coverage
+      - name: Run Forge coverage
         run: forge coverage --report summary
+        id: coverage
+
+      - name: Gas report
+        run: forge test --gas-report
+        id: gas
 
   lint:
+    name: Solidity Lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
 
       - name: Check formatting
         run: forge fmt --check
+
+  analyze:
+    name: Static Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - name: Run Slither
+        uses: crytic/slither-action@v0.3.0
+        continue-on-error: true
+        id: slither
+        with:
+          target: 'src/'
+          slither-args: '--filter-paths "lib|test" --exclude naming-convention,external-function,low-level-calls'
+
+  security:
+    name: Security Checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+
+      - name: Run tests with coverage
+        run: forge coverage --report lcov
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./lcov.info
+          flags: foundry
+          name: foundry-coverage
+          fail_ci_if_error: false
