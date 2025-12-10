@@ -103,16 +103,15 @@ contract UpgradeToV2_1Sepolia is Script {
         string memory path = string.concat(root, "/deployments/", network, "-v2.1.json");
 
         string memory json = "upgrade";
-        json.serialize("network", network);
-        json.serialize("version", "2.1");
-        json.serialize("proxy", proxy);
-        json.serialize("implementationV2_1", implementationV2_1);
-        json.serialize("paymentProcessor", newPaymentProcessor);
-        json.serialize("oldPaymentProcessor", oldPaymentProcessor);
-        json.serialize("deployer", deployer);
-        json.serialize("chainId", block.chainid);
-        json.serialize("blockNumber", block.number);
-        string memory finalJson = json.serialize("timestamp", block.timestamp);
+        vm.serializeString(json, "network", network);
+        vm.serializeAddress(json, "proxy", proxy);
+        vm.serializeAddress(json, "implementationV2_1", implementationV2_1);
+        vm.serializeAddress(json, "paymentProcessor", newPaymentProcessor);
+        vm.serializeAddress(json, "oldPaymentProcessor", oldPaymentProcessor);
+        vm.serializeAddress(json, "deployer", deployer);
+        vm.serializeUint(json, "chainId", block.chainid);
+        vm.serializeUint(json, "blockNumber", block.number);
+        string memory finalJson = vm.serializeUint(json, "timestamp", block.timestamp);
 
         vm.writeJson(finalJson, path);
         console.log("\nDeployment saved to:", path);
@@ -205,16 +204,15 @@ contract UpgradeToV2_1Mainnet is Script {
         string memory path = string.concat(root, "/deployments/", network, "-v2.1.json");
 
         string memory json = "upgrade";
-        json.serialize("network", network);
-        json.serialize("version", "2.1");
-        json.serialize("proxy", proxy);
-        json.serialize("implementationV2_1", implementationV2_1);
-        json.serialize("paymentProcessor", newPaymentProcessor);
-        json.serialize("oldPaymentProcessor", oldPaymentProcessor);
-        json.serialize("deployer", deployer);
-        json.serialize("chainId", block.chainid);
-        json.serialize("blockNumber", block.number);
-        string memory finalJson = json.serialize("timestamp", block.timestamp);
+        vm.serializeString(json, "network", network);
+        vm.serializeAddress(json, "proxy", proxy);
+        vm.serializeAddress(json, "implementationV2_1", implementationV2_1);
+        vm.serializeAddress(json, "paymentProcessor", newPaymentProcessor);
+        vm.serializeAddress(json, "oldPaymentProcessor", oldPaymentProcessor);
+        vm.serializeAddress(json, "deployer", deployer);
+        vm.serializeUint(json, "chainId", block.chainid);
+        vm.serializeUint(json, "blockNumber", block.number);
+        string memory finalJson = vm.serializeUint(json, "timestamp", block.timestamp);
 
         vm.writeJson(finalJson, path);
         console.log("\nDeployment saved to:", path);
