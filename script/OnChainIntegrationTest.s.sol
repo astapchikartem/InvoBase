@@ -55,8 +55,8 @@ contract OnChainIntegrationTest is Script {
         address linkAddress = json.readAddress(".paymentLink");
 
         nft = InvoiceNFTV2(proxyAddress);
-        payment = InvoicePayment(paymentAddress);
-        paymentLink = PaymentLink(linkAddress);
+        payment = InvoicePayment(payable(paymentAddress));
+        paymentLink = PaymentLink(payable(linkAddress));
         usdc = IERC20(0x036CbD53842c5426634e7929541eC2318f3dCF7e);
     }
 

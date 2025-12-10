@@ -56,9 +56,12 @@ contract InvoiceNFTV2 is ERC721Upgradeable, OwnableUpgradeable, UUPSUpgradeable 
 
     function initialize(address initialOwner) public initializer {
         __ERC721_init("InvoBase Invoice", "INVO");
-        __Ownable_init(initialOwner);
+        __Ownable_init();
         __UUPSUpgradeable_init();
         _nextTokenId = 1;
+        if (initialOwner != msg.sender) {
+            transferOwnership(initialOwner);
+        }
     }
 
     function initializeV2(address _paymentProcessor) public reinitializer(2) {

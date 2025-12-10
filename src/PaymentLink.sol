@@ -3,7 +3,7 @@ pragma solidity ^0.8.24;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
 
 interface IInvoicePaymentForLink {
@@ -27,7 +27,7 @@ interface IInvoiceNFTForLink {
 contract PaymentLink is ReentrancyGuard, Ownable {
     using SafeERC20 for IERC20;
 
-    struct PaymentLink {
+    struct Link {
         uint256 invoiceId;
         bytes32 linkId;
         uint256 expiry;
@@ -37,7 +37,7 @@ contract PaymentLink is ReentrancyGuard, Ownable {
     IInvoicePaymentForLink public paymentProcessor;
     IInvoiceNFTForLink public invoiceNFT;
 
-    mapping(bytes32 => PaymentLink) public links;
+    mapping(bytes32 => Link) public links;
     mapping(uint256 => bytes32) public invoiceToLink;
     uint256 private _nonce;
 
@@ -55,9 +55,12 @@ contract PaymentLink is ReentrancyGuard, Ownable {
     error InsufficientPayment();
     error Unauthorized();
 
-    constructor(address _paymentProcessor, address _invoiceNFT, address initialOwner) Ownable(initialOwner) {
+    constructor(address _paymentProcessor, address _invoiceNFT, address initialOwner) {
         paymentProcessor = IInvoicePaymentForLink(_paymentProcessor);
         invoiceNFT = IInvoiceNFTForLink(_invoiceNFT);
+        if (initialOwner != msg.sender) {
+            transferOwnership(initialOwner);
+        }
     }
 
     function generateLink(uint256 invoiceId, uint256 expiry) external returns (bytes32 linkId) {
@@ -66,7 +69,7 @@ contract PaymentLink is ReentrancyGuard, Ownable {
 
         linkId = keccak256(abi.encodePacked(invoiceId, msg.sender, block.timestamp, _nonce++));
 
-        links[linkId] = PaymentLink({invoiceId: invoiceId, linkId: linkId, expiry: expiry, used: false});
+        links[linkId] = Link({invoiceId: invoiceId, linkId: linkId, expiry: expiry, used: false});
 
         invoiceToLink[invoiceId] = linkId;
 
@@ -76,7 +79,7 @@ contract PaymentLink is ReentrancyGuard, Ownable {
     }
 
     function payViaLink(bytes32 linkId) external payable nonReentrant {
-        PaymentLink storage link = links[linkId];
+        Link storage link = links[linkId];
 
         if (link.linkId == bytes32(0)) revert LinkNotFound();
         if (link.used) revert LinkAlreadyUsed();
@@ -93,7 +96,7 @@ contract PaymentLink is ReentrancyGuard, Ownable {
     }
 
     function payViaLinkToken(bytes32 linkId, address token, uint256 amount) external nonReentrant {
-        PaymentLink storage link = links[linkId];
+        Link storage link = links[linkId];
 
         if (link.linkId == bytes32(0)) revert LinkNotFound();
         if (link.used) revert LinkAlreadyUsed();
@@ -113,7 +116,7 @@ contract PaymentLink is ReentrancyGuard, Ownable {
     }
 
     function isLinkValid(bytes32 linkId) external view returns (bool) {
-        PaymentLink memory link = links[linkId];
+        Link memory link = links[linkId];
 
         if (link.linkId == bytes32(0)) return false;
         if (link.used) return false;
@@ -122,11 +125,11 @@ contract PaymentLink is ReentrancyGuard, Ownable {
         return true;
     }
 
-    function getLink(bytes32 linkId) external view returns (PaymentLink memory) {
+    function getLink(bytes32 linkId) external view returns (Link memory) {
         return links[linkId];
     }
 
-    function getLinkByInvoice(uint256 invoiceId) external view returns (PaymentLink memory) {
+    function getLinkByInvoice(uint256 invoiceId) external view returns (Link memory) {
         bytes32 linkId = invoiceToLink[invoiceId];
         return links[linkId];
     }

@@ -91,7 +91,7 @@ contract InvoicePaymentTest is Test {
         nft.issue(tokenId);
 
         vm.prank(issuer);
-        payment.setPartialPaymentAllowed(tokenId, true);
+        nft.setPartialPayment(tokenId, true);
 
         uint256 partialAmount = INVOICE_AMOUNT / 2;
 
@@ -179,7 +179,7 @@ contract InvoicePaymentTest is Test {
 
         vm.prank(payer);
         vm.expectRevert(InvoicePayment.Unauthorized.selector);
-        payment.setPartialPaymentAllowed(tokenId, true);
+        nft.setPartialPayment(tokenId, true);
     }
 
     function testOnlyIssuerCanRecordExternalPayment() public {
@@ -218,7 +218,7 @@ contract InvoicePaymentTest is Test {
         nft.issue(tokenId);
 
         vm.prank(issuer);
-        payment.setPartialPaymentAllowed(tokenId, true);
+        nft.setPartialPayment(tokenId, true);
 
         uint256 partialAmount = INVOICE_AMOUNT / 4;
 
