@@ -171,9 +171,9 @@ contract InvoiceEdgeCasesTest is Test {
     function testRefundPartialPayments() public {
         vm.startPrank(issuer);
         uint256 tokenId = nft.mint(payer, INVOICE_AMOUNT, block.timestamp + DUE_DATE_OFFSET);
-        nft.issue(tokenId);
         nft.setPartialPayment(tokenId, true);
         nft.setInvoiceToken(tokenId, address(usdc));
+        nft.issue(tokenId);
         vm.stopPrank();
 
         uint256 partialAmount = INVOICE_AMOUNT / 2;

@@ -101,9 +101,9 @@ contract InvoiceLifecycleTest is Test {
     function testPartialPaymentOverpaymentReverts() public {
         vm.startPrank(issuer);
         uint256 tokenId = nft.mint(payer, INVOICE_AMOUNT, block.timestamp + DUE_DATE_OFFSET);
-        nft.issue(tokenId);
         nft.setPartialPayment(tokenId, true);
         nft.setInvoiceToken(tokenId, address(usdc));
+        nft.issue(tokenId);
         vm.stopPrank();
 
         uint256 firstPayment = INVOICE_AMOUNT / 2;
@@ -151,9 +151,9 @@ contract InvoiceLifecycleTest is Test {
     function testPartialPaymentCompletionUpdatesStatus() public {
         vm.startPrank(issuer);
         uint256 tokenId = nft.mint(payer, INVOICE_AMOUNT, block.timestamp + DUE_DATE_OFFSET);
-        nft.issue(tokenId);
         nft.setPartialPayment(tokenId, true);
         nft.setInvoiceToken(tokenId, address(usdc));
+        nft.issue(tokenId);
         vm.stopPrank();
 
         uint256 firstPayment = INVOICE_AMOUNT / 2;
@@ -217,15 +217,16 @@ contract InvoiceLifecycleTest is Test {
         vm.expectRevert(InvoicePayment.PartialPaymentNotAllowed.selector);
         payment.payInvoicePartial{value: 0}(tokenId, INVOICE_AMOUNT / 2);
 
-        vm.prank(issuer);
-        nft.setPartialPayment(tokenId, true);
-
-        vm.prank(issuer);
-        nft.setInvoiceToken(tokenId, address(usdc));
+        vm.startPrank(issuer);
+        uint256 tokenId2 = nft.mint(payer, INVOICE_AMOUNT, block.timestamp + DUE_DATE_OFFSET);
+        nft.setPartialPayment(tokenId2, true);
+        nft.setInvoiceToken(tokenId2, address(usdc));
+        nft.issue(tokenId2);
+        vm.stopPrank();
 
         vm.startPrank(payer);
         usdc.approve(address(payment), INVOICE_AMOUNT);
-        payment.payInvoicePartial{value: 0}(tokenId, INVOICE_AMOUNT / 2);
+        payment.payInvoicePartial{value: 0}(tokenId2, INVOICE_AMOUNT / 2);
         vm.stopPrank();
     }
 }

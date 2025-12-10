@@ -88,13 +88,13 @@ contract InvoicePaymentTest is Test {
         uint256 tokenId = nft.mint(payer, INVOICE_AMOUNT, block.timestamp + DUE_DATE_OFFSET);
 
         vm.prank(issuer);
-        nft.issue(tokenId);
-
-        vm.prank(issuer);
         nft.setPartialPayment(tokenId, true);
 
         vm.prank(issuer);
         nft.setInvoiceToken(tokenId, address(usdc));
+
+        vm.prank(issuer);
+        nft.issue(tokenId);
 
         uint256 partialAmount = INVOICE_AMOUNT / 2;
 
@@ -218,13 +218,13 @@ contract InvoicePaymentTest is Test {
         assertEq(payment.getRemainingAmount(tokenId), INVOICE_AMOUNT);
 
         vm.prank(issuer);
-        nft.issue(tokenId);
-
-        vm.prank(issuer);
         nft.setPartialPayment(tokenId, true);
 
         vm.prank(issuer);
         nft.setInvoiceToken(tokenId, address(usdc));
+
+        vm.prank(issuer);
+        nft.issue(tokenId);
 
         uint256 partialAmount = INVOICE_AMOUNT / 4;
 
