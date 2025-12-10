@@ -103,6 +103,7 @@ contract InvoiceLifecycleTest is Test {
         uint256 tokenId = nft.mint(payer, INVOICE_AMOUNT, block.timestamp + DUE_DATE_OFFSET);
         nft.issue(tokenId);
         nft.setPartialPayment(tokenId, true);
+        nft.setInvoiceToken(tokenId, address(usdc));
         vm.stopPrank();
 
         uint256 firstPayment = INVOICE_AMOUNT / 2;
@@ -152,6 +153,7 @@ contract InvoiceLifecycleTest is Test {
         uint256 tokenId = nft.mint(payer, INVOICE_AMOUNT, block.timestamp + DUE_DATE_OFFSET);
         nft.issue(tokenId);
         nft.setPartialPayment(tokenId, true);
+        nft.setInvoiceToken(tokenId, address(usdc));
         vm.stopPrank();
 
         uint256 firstPayment = INVOICE_AMOUNT / 2;
@@ -217,6 +219,9 @@ contract InvoiceLifecycleTest is Test {
 
         vm.prank(issuer);
         nft.setPartialPayment(tokenId, true);
+
+        vm.prank(issuer);
+        nft.setInvoiceToken(tokenId, address(usdc));
 
         vm.startPrank(payer);
         usdc.approve(address(payment), INVOICE_AMOUNT);

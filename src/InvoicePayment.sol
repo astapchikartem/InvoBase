@@ -20,6 +20,7 @@ interface IInvoiceNFT {
     function ownerOf(uint256 tokenId) external view returns (address);
     function markAsPaid(uint256 tokenId) external;
     function partialPaymentAllowed(uint256 tokenId) external view returns (bool);
+    function invoiceToken(uint256 tokenId) external view returns (address);
 }
 
 contract InvoicePayment is ReentrancyGuard, Ownable {
@@ -98,6 +99,10 @@ contract InvoicePayment is ReentrancyGuard, Ownable {
 
         invoiceNFT.markAsPaid(invoiceId);
 
+        // Transfer payment to issuer
+        (bool success,) = payable(invoice.issuer).call{value: msg.value}("");
+        if (!success) revert RefundFailed();
+
         emit InvoicePaymentReceived(invoiceId, msg.sender, address(0), msg.value);
     }
 
@@ -121,7 +126,7 @@ contract InvoicePayment is ReentrancyGuard, Ownable {
             paymentRef: bytes32(0)
         });
 
-        IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
+        IERC20(token).safeTransferFrom(msg.sender, invoice.issuer, amount);
 
         invoiceNFT.markAsPaid(invoiceId);
 
@@ -148,15 +153,19 @@ contract InvoicePayment is ReentrancyGuard, Ownable {
         if (msg.value > 0) {
             // ETH payment - held in contract
         } else {
-            address token = payments[invoiceId].token;
+            // Get token from invoice (must be set via setInvoiceToken)
+            address token = invoiceNFT.invoiceToken(invoiceId);
             if (token == address(0)) revert TokenNotSupported();
+            if (!supportedTokens[token]) revert TokenNotSupported();
             IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
         }
 
         if (remaining == 0) {
+            address paymentToken = msg.value > 0 ? address(0) : invoiceNFT.invoiceToken(invoiceId);
+
             payments[invoiceId] = PaymentInfo({
                 invoiceId: invoiceId,
-                token: msg.value > 0 ? address(0) : payments[invoiceId].token,
+                token: paymentToken,
                 amountPaid: totalPaid,
                 paidAt: block.timestamp,
                 paidBy: msg.sender,
@@ -165,9 +174,15 @@ contract InvoicePayment is ReentrancyGuard, Ownable {
 
             invoiceNFT.markAsPaid(invoiceId);
 
-            emit InvoicePaymentReceived(
-                invoiceId, msg.sender, msg.value > 0 ? address(0) : payments[invoiceId].token, totalPaid
-            );
+            // Transfer accumulated payment to issuer
+            if (paymentToken == address(0)) {
+                (bool success,) = payable(invoice.issuer).call{value: totalPaid}("");
+                if (!success) revert RefundFailed();
+            } else {
+                IERC20(paymentToken).safeTransfer(invoice.issuer, totalPaid);
+            }
+
+            emit InvoicePaymentReceived(invoiceId, msg.sender, paymentToken, totalPaid);
         } else {
             emit PartialPaymentReceived(invoiceId, msg.sender, paymentAmount, remaining);
         }

@@ -140,6 +140,14 @@ contract InvoiceNFTV2 is ERC721Upgradeable, OwnableUpgradeable, UUPSUpgradeable 
         emit PartialPaymentSet(tokenId, allowed);
     }
 
+    function setInvoiceToken(uint256 tokenId, address token) external {
+        Invoice storage invoice = _invoices[tokenId];
+        if (invoice.issuer != msg.sender) revert Unauthorized();
+
+        invoiceToken[tokenId] = token;
+        emit InvoiceTokenSet(tokenId, token);
+    }
+
     function pay(uint256 tokenId) external payable {
         if (paymentProcessor == address(0)) revert PaymentProcessorNotSet();
         Invoice storage invoice = _invoices[tokenId];

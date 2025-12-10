@@ -93,6 +93,9 @@ contract InvoicePaymentTest is Test {
         vm.prank(issuer);
         nft.setPartialPayment(tokenId, true);
 
+        vm.prank(issuer);
+        nft.setInvoiceToken(tokenId, address(usdc));
+
         uint256 partialAmount = INVOICE_AMOUNT / 2;
 
         vm.startPrank(payer);
@@ -219,6 +222,9 @@ contract InvoicePaymentTest is Test {
 
         vm.prank(issuer);
         nft.setPartialPayment(tokenId, true);
+
+        vm.prank(issuer);
+        nft.setInvoiceToken(tokenId, address(usdc));
 
         uint256 partialAmount = INVOICE_AMOUNT / 4;
 
