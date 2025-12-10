@@ -200,10 +200,10 @@ contract InvoicePayment is ReentrancyGuard, Ownable {
 
         if (invoice.issuer != msg.sender) revert Unauthorized();
         if (invoice.amount == 0) revert InvoiceNotFound();
-        if (payments[invoiceId].amountPaid > 0) revert AlreadyRecorded();
         if (invoice.status == 2) revert InvoiceAlreadyPaid();
         if (invoice.status == 3) revert InvoiceCancelled();
         if (invoice.status != 1) revert InvoiceNotIssued();
+        if (payments[invoiceId].amountPaid > 0) revert AlreadyRecorded();
 
         payments[invoiceId] = PaymentInfo({
             invoiceId: invoiceId,
