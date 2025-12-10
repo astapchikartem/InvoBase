@@ -66,6 +66,8 @@ contract InvoicePayment is ReentrancyGuard, Ownable {
     error NoPaymentToRelease();
     error InvalidStatus();
     error Overpayment();
+    error InvoiceNotIssued();
+    error AlreadyRecorded();
 
     constructor(address _invoiceNFT, address initialOwner) {
         invoiceNFT = IInvoiceNFT(_invoiceNFT);
@@ -85,6 +87,7 @@ contract InvoicePayment is ReentrancyGuard, Ownable {
         if (invoice.amount == 0) revert InvoiceNotFound();
         if (invoice.status == 2) revert InvoiceAlreadyPaid();
         if (invoice.status == 3) revert InvoiceCancelled();
+        if (invoice.status != 1) revert InvoiceNotIssued();
         if (msg.value < invoice.amount) revert InsufficientPayment();
         if (msg.value > invoice.amount) revert Overpayment();
 
@@ -114,6 +117,7 @@ contract InvoicePayment is ReentrancyGuard, Ownable {
         if (invoice.amount == 0) revert InvoiceNotFound();
         if (invoice.status == 2) revert InvoiceAlreadyPaid();
         if (invoice.status == 3) revert InvoiceCancelled();
+        if (invoice.status != 1) revert InvoiceNotIssued();
         if (amount < invoice.amount) revert InsufficientPayment();
         if (amount > invoice.amount) revert Overpayment();
 
@@ -141,6 +145,7 @@ contract InvoicePayment is ReentrancyGuard, Ownable {
         if (invoice.amount == 0) revert InvoiceNotFound();
         if (invoice.status == 2) revert InvoiceAlreadyPaid();
         if (invoice.status == 3) revert InvoiceCancelled();
+        if (invoice.status != 1) revert InvoiceNotIssued();
 
         uint256 paymentAmount = msg.value > 0 ? msg.value : amount;
         uint256 totalPaid = partialPaid[invoiceId] + paymentAmount;
@@ -197,6 +202,8 @@ contract InvoicePayment is ReentrancyGuard, Ownable {
         if (invoice.amount == 0) revert InvoiceNotFound();
         if (invoice.status == 2) revert InvoiceAlreadyPaid();
         if (invoice.status == 3) revert InvoiceCancelled();
+        if (invoice.status != 1) revert InvoiceNotIssued();
+        if (payments[invoiceId].amountPaid > 0) revert AlreadyRecorded();
 
         payments[invoiceId] = PaymentInfo({
             invoiceId: invoiceId,
@@ -233,25 +240,45 @@ contract InvoicePayment is ReentrancyGuard, Ownable {
     }
 
     function refund(uint256 invoiceId) external nonReentrant {
-        PaymentInfo memory payment = payments[invoiceId];
         IInvoiceNFT.Invoice memory invoice = invoiceNFT.getInvoice(invoiceId);
-
         if (invoice.issuer != msg.sender) revert Unauthorized();
-        if (payment.amountPaid == 0) revert InvoiceNotFound();
         if (invoice.status != 3) revert InvalidStatus();
 
-        uint256 refundAmount = payment.amountPaid;
-        delete payments[invoiceId];
-        delete partialPaid[invoiceId];
+        PaymentInfo memory payment = payments[invoiceId];
+        uint256 partialAmount = partialPaid[invoiceId];
 
-        if (payment.token == address(0)) {
-            (bool success,) = payable(payment.paidBy).call{value: refundAmount}("");
-            if (!success) revert RefundFailed();
-        } else {
-            IERC20(payment.token).safeTransfer(payment.paidBy, refundAmount);
+        if (payment.amountPaid == 0 && partialAmount == 0) revert InvoiceNotFound();
+
+        if (payment.amountPaid > 0) {
+            uint256 refundAmount = payment.amountPaid;
+            address refundRecipient = payment.paidBy;
+            address refundToken = payment.token;
+
+            delete payments[invoiceId];
+
+            if (refundToken == address(0)) {
+                (bool success,) = payable(refundRecipient).call{value: refundAmount}("");
+                if (!success) revert RefundFailed();
+            } else {
+                IERC20(refundToken).safeTransfer(refundRecipient, refundAmount);
+            }
+
+            emit PaymentRefunded(invoiceId, refundRecipient, refundAmount);
         }
 
-        emit PaymentRefunded(invoiceId, payment.paidBy, refundAmount);
+        if (partialAmount > 0) {
+            address refundToken = invoiceNFT.invoiceToken(invoiceId);
+            delete partialPaid[invoiceId];
+
+            if (refundToken == address(0)) {
+                (bool success,) = payable(invoice.payer).call{value: partialAmount}("");
+                if (!success) revert RefundFailed();
+            } else {
+                IERC20(refundToken).safeTransfer(invoice.payer, partialAmount);
+            }
+
+            emit PaymentRefunded(invoiceId, invoice.payer, partialAmount);
+        }
     }
 
     function getPaymentInfo(uint256 invoiceId) external view returns (PaymentInfo memory) {

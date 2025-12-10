@@ -53,6 +53,8 @@ contract InvoiceNFTV2 is ERC721Upgradeable, OwnableUpgradeable, UUPSUpgradeable 
     error InvalidTransition();
     error AlreadyPaid();
     error CannotCancelPaidInvoice();
+    error CannotModifyIssuedInvoice();
+    error InvoiceNotIssued();
 
     function initialize(address initialOwner) public initializer {
         __ERC721_init("InvoBase Invoice", "INVO");
@@ -135,6 +137,7 @@ contract InvoiceNFTV2 is ERC721Upgradeable, OwnableUpgradeable, UUPSUpgradeable 
     function setPartialPayment(uint256 tokenId, bool allowed) external {
         Invoice storage invoice = _invoices[tokenId];
         if (invoice.issuer != msg.sender) revert Unauthorized();
+        if (invoice.status != InvoiceStatus.Draft) revert CannotModifyIssuedInvoice();
 
         partialPaymentAllowed[tokenId] = allowed;
         emit PartialPaymentSet(tokenId, allowed);
@@ -143,6 +146,7 @@ contract InvoiceNFTV2 is ERC721Upgradeable, OwnableUpgradeable, UUPSUpgradeable 
     function setInvoiceToken(uint256 tokenId, address token) external {
         Invoice storage invoice = _invoices[tokenId];
         if (invoice.issuer != msg.sender) revert Unauthorized();
+        if (invoice.status != InvoiceStatus.Draft) revert CannotModifyIssuedInvoice();
 
         invoiceToken[tokenId] = token;
         emit InvoiceTokenSet(tokenId, token);
@@ -233,7 +237,8 @@ contract InvoiceNFTV2 is ERC721Upgradeable, OwnableUpgradeable, UUPSUpgradeable 
     function markAsPaid(uint256 tokenId) external {
         if (msg.sender != paymentProcessor) revert Unauthorized();
         Invoice storage invoice = _invoices[tokenId];
-        if (invoice.status != InvoiceStatus.Issued) revert InvalidTransition();
+        if (invoice.status == InvoiceStatus.Paid) revert AlreadyPaid();
+        if (invoice.status != InvoiceStatus.Issued) revert InvoiceNotIssued();
 
         InvoiceStatus oldStatus = invoice.status;
         invoice.status = InvoiceStatus.Paid;
