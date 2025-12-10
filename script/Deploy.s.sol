@@ -41,42 +41,37 @@ contract DeployAllSepolia is Script {
         vm.startBroadcast(deployerPrivateKey);
 
         // Deploy InvoiceNFTV2
-        InvoiceNFTV2 nftImpl = new InvoiceNFTV2();
-        bytes memory nftInitData = abi.encodeCall(InvoiceNFTV2.initialize, (deployer));
-        ERC1967Proxy nftProxy = new ERC1967Proxy(address(nftImpl), nftInitData);
-        InvoiceNFTV2 nft = InvoiceNFTV2(address(nftProxy));
-        console.log("InvoiceNFTV2 Proxy:", address(nft));
-        console.log("InvoiceNFTV2 Implementation:", address(nftImpl));
+        address nftImpl = address(new InvoiceNFTV2());
+        address nft = address(new ERC1967Proxy(nftImpl, abi.encodeCall(InvoiceNFTV2.initialize, (deployer))));
+        console.log("InvoiceNFTV2 Proxy:", nft);
+        console.log("InvoiceNFTV2 Implementation:", nftImpl);
 
         // Deploy InvoicePayment
-        InvoicePayment paymentImpl = new InvoicePayment();
-        bytes memory paymentInitData = abi.encodeCall(InvoicePayment.initialize, (address(nft), deployer));
-        ERC1967Proxy paymentProxy = new ERC1967Proxy(address(paymentImpl), paymentInitData);
-        InvoicePayment payment = InvoicePayment(payable(address(paymentProxy)));
-        console.log("InvoicePayment Proxy:", address(payment));
-        console.log("InvoicePayment Implementation:", address(paymentImpl));
+        address paymentImpl = address(new InvoicePayment());
+        address payment =
+            address(new ERC1967Proxy(paymentImpl, abi.encodeCall(InvoicePayment.initialize, (nft, deployer))));
+        console.log("InvoicePayment Proxy:", payment);
+        console.log("InvoicePayment Implementation:", paymentImpl);
 
         // Initialize V2 on NFT
-        nft.initializeV2(address(payment));
+        InvoiceNFTV2(nft).initializeV2(payment);
 
         // Deploy PaymentLink
-        PaymentLink linkImpl = new PaymentLink();
-        bytes memory linkInitData = abi.encodeCall(PaymentLink.initialize, (address(payment), address(nft), deployer));
-        ERC1967Proxy linkProxy = new ERC1967Proxy(address(linkImpl), linkInitData);
-        PaymentLink link = PaymentLink(payable(address(linkProxy)));
-        console.log("PaymentLink Proxy:", address(link));
-        console.log("PaymentLink Implementation:", address(linkImpl));
+        address linkImpl = address(new PaymentLink());
+        address link =
+            address(new ERC1967Proxy(linkImpl, abi.encodeCall(PaymentLink.initialize, (payment, nft, deployer))));
+        console.log("PaymentLink Proxy:", link);
+        console.log("PaymentLink Implementation:", linkImpl);
 
         // Configure USDC support (Base Sepolia USDC: 0x036CbD53842c5426634e7929541eC2318f3dCF7e)
-        address usdcSepolia = 0x036CbD53842c5426634e7929541eC2318f3dCF7e;
-        payment.setSupportedToken(usdcSepolia, true);
-        console.log("USDC support enabled:", usdcSepolia);
+        InvoicePayment(payable(payment)).setSupportedToken(0x036CbD53842c5426634e7929541eC2318f3dCF7e, true);
+        console.log("USDC support enabled:", 0x036CbD53842c5426634e7929541eC2318f3dCF7e);
 
         vm.stopBroadcast();
 
         console.log("\n[PASS] Deployment complete");
 
-        _saveDeployment("base-sepolia", address(nft), address(nftImpl), address(payment), address(paymentImpl), address(link), address(linkImpl), deployer);
+        _saveDeployment("base-sepolia", nft, nftImpl, payment, paymentImpl, link, linkImpl, deployer);
     }
 
     function _saveDeployment(
@@ -127,42 +122,37 @@ contract DeployAllMainnet is Script {
         vm.startBroadcast(deployerPrivateKey);
 
         // Deploy InvoiceNFTV2
-        InvoiceNFTV2 nftImpl = new InvoiceNFTV2();
-        bytes memory nftInitData = abi.encodeCall(InvoiceNFTV2.initialize, (deployer));
-        ERC1967Proxy nftProxy = new ERC1967Proxy(address(nftImpl), nftInitData);
-        InvoiceNFTV2 nft = InvoiceNFTV2(address(nftProxy));
-        console.log("InvoiceNFTV2 Proxy:", address(nft));
-        console.log("InvoiceNFTV2 Implementation:", address(nftImpl));
+        address nftImpl = address(new InvoiceNFTV2());
+        address nft = address(new ERC1967Proxy(nftImpl, abi.encodeCall(InvoiceNFTV2.initialize, (deployer))));
+        console.log("InvoiceNFTV2 Proxy:", nft);
+        console.log("InvoiceNFTV2 Implementation:", nftImpl);
 
         // Deploy InvoicePayment
-        InvoicePayment paymentImpl = new InvoicePayment();
-        bytes memory paymentInitData = abi.encodeCall(InvoicePayment.initialize, (address(nft), deployer));
-        ERC1967Proxy paymentProxy = new ERC1967Proxy(address(paymentImpl), paymentInitData);
-        InvoicePayment payment = InvoicePayment(payable(address(paymentProxy)));
-        console.log("InvoicePayment Proxy:", address(payment));
-        console.log("InvoicePayment Implementation:", address(paymentImpl));
+        address paymentImpl = address(new InvoicePayment());
+        address payment =
+            address(new ERC1967Proxy(paymentImpl, abi.encodeCall(InvoicePayment.initialize, (nft, deployer))));
+        console.log("InvoicePayment Proxy:", payment);
+        console.log("InvoicePayment Implementation:", paymentImpl);
 
         // Initialize V2 on NFT
-        nft.initializeV2(address(payment));
+        InvoiceNFTV2(nft).initializeV2(payment);
 
         // Deploy PaymentLink
-        PaymentLink linkImpl = new PaymentLink();
-        bytes memory linkInitData = abi.encodeCall(PaymentLink.initialize, (address(payment), address(nft), deployer));
-        ERC1967Proxy linkProxy = new ERC1967Proxy(address(linkImpl), linkInitData);
-        PaymentLink link = PaymentLink(payable(address(linkProxy)));
-        console.log("PaymentLink Proxy:", address(link));
-        console.log("PaymentLink Implementation:", address(linkImpl));
+        address linkImpl = address(new PaymentLink());
+        address link =
+            address(new ERC1967Proxy(linkImpl, abi.encodeCall(PaymentLink.initialize, (payment, nft, deployer))));
+        console.log("PaymentLink Proxy:", link);
+        console.log("PaymentLink Implementation:", linkImpl);
 
         // Configure USDC support (Base Mainnet USDC: 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913)
-        address usdcMainnet = 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913;
-        payment.setSupportedToken(usdcMainnet, true);
-        console.log("USDC support enabled:", usdcMainnet);
+        InvoicePayment(payable(payment)).setSupportedToken(0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913, true);
+        console.log("USDC support enabled:", 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913);
 
         vm.stopBroadcast();
 
         console.log("\n[PASS] Deployment complete");
 
-        _saveDeployment("base-mainnet", address(nft), address(nftImpl), address(payment), address(paymentImpl), address(link), address(linkImpl), deployer);
+        _saveDeployment("base-mainnet", nft, nftImpl, payment, paymentImpl, link, linkImpl, deployer);
     }
 
     function _saveDeployment(
