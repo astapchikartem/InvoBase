@@ -3,8 +3,10 @@ pragma solidity ^0.8.24;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
+import {OwnableUpgradeable} from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import {Initializable} from "@openzeppelin-upgradeable/contracts/proxy/utils/Initializable.sol";
+import {UUPSUpgradeable} from "@openzeppelin-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
 
 interface IInvoicePaymentForLink {
     function payInvoice(uint256 invoiceId) external payable;
@@ -24,7 +26,7 @@ interface IInvoiceNFTForLink {
     function getInvoice(uint256 tokenId) external view returns (Invoice memory);
 }
 
-contract PaymentLink is ReentrancyGuard, Ownable {
+contract PaymentLink is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeable, UUPSUpgradeable {
     using SafeERC20 for IERC20;
 
     struct Link {
@@ -55,13 +57,25 @@ contract PaymentLink is ReentrancyGuard, Ownable {
     error InsufficientPayment();
     error Unauthorized();
 
-    constructor(address _paymentProcessor, address _invoiceNFT, address initialOwner) {
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
+    function initialize(address _paymentProcessor, address _invoiceNFT, address initialOwner) public initializer {
+        __ReentrancyGuard_init();
+        __Ownable_init();
+        __UUPSUpgradeable_init();
+
         paymentProcessor = IInvoicePaymentForLink(_paymentProcessor);
         invoiceNFT = IInvoiceNFTForLink(_invoiceNFT);
+
         if (initialOwner != msg.sender) {
             transferOwnership(initialOwner);
         }
     }
+
+    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
     function generateLink(uint256 invoiceId, uint256 expiry) external returns (bytes32 linkId) {
         IInvoiceNFTForLink.Invoice memory invoice = invoiceNFT.getInvoice(invoiceId);

@@ -33,10 +33,17 @@ contract PaymentLinkTest is Test {
         ERC1967Proxy proxy = new ERC1967Proxy(address(implementation), initData);
         nft = InvoiceNFTV2(address(proxy));
 
-        payment = new InvoicePayment(address(nft), owner);
+        InvoicePayment paymentImpl = new InvoicePayment();
+        bytes memory paymentInitData = abi.encodeCall(InvoicePayment.initialize, (address(nft), owner));
+        ERC1967Proxy paymentProxy = new ERC1967Proxy(address(paymentImpl), paymentInitData);
+        payment = InvoicePayment(payable(address(paymentProxy)));
+
         nft.initializeV2(address(payment));
 
-        paymentLink = new PaymentLink(address(payment), address(nft), owner);
+        PaymentLink linkImpl = new PaymentLink();
+        bytes memory linkInitData = abi.encodeCall(PaymentLink.initialize, (address(payment), address(nft), owner));
+        ERC1967Proxy linkProxy = new ERC1967Proxy(address(linkImpl), linkInitData);
+        paymentLink = PaymentLink(payable(address(linkProxy)));
 
         usdc = new MockERC20("USD Coin", "USDC", 6);
         payment.setSupportedToken(address(usdc), true);

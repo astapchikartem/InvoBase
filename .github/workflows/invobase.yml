@@ -1,0 +1,213 @@
+name: InvoBase Deployment & Upgrade
+
+on:
+  workflow_dispatch:
+    inputs:
+      network:
+        description: 'Target Network'
+        required: true
+        type: choice
+        options:
+          - base_sepolia
+          - base_mainnet
+      action:
+        description: 'Action'
+        required: true
+        type: choice
+        options:
+          - deploy
+          - upgrade
+      contract:
+        description: 'Contract (all or specific)'
+        required: true
+        type: choice
+        options:
+          - all
+          - nft
+          - payment
+          - link
+      confirm_mainnet:
+        description: 'Type "CONFIRM" for mainnet operations'
+        required: false
+        type: string
+        default: ''
+
+jobs:
+  execute:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.network }}
+
+    steps:
+      - name: Validate Mainnet Confirmation
+        if: inputs.network == 'base_mainnet' && inputs.confirm_mainnet != 'CONFIRM'
+        run: |
+          echo "::error::Mainnet operations require confirmation. Type 'CONFIRM' in the confirm_mainnet field."
+          exit 1
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Install dependencies
+        run: |
+          forge install foundry-rs/forge-std@v1.7.0 --no-git
+          forge install OpenZeppelin/openzeppelin-contracts@v5.0.2 --no-git
+          forge install OpenZeppelin/openzeppelin-contracts-upgradeable@v5.0.2 --no-git
+
+      - name: Build contracts
+        run: forge build --sizes
+
+      - name: Run tests
+        run: forge test -vvv
+
+      # ========================================
+      # DEPLOY OPERATIONS
+      # ========================================
+      - name: 🚀 Deploy All (Sepolia)
+        if: inputs.action == 'deploy' && inputs.contract == 'all' && inputs.network == 'base_sepolia'
+        env:
+          DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
+          BASE_SEPOLIA_RPC: ${{ secrets.BASE_SEPOLIA_RPC }}
+          BASESCAN_API_KEY: ${{ secrets.BASESCAN_API_KEY }}
+        run: |
+          forge script script/Deploy.s.sol:DeployAllSepolia \
+            --rpc-url $BASE_SEPOLIA_RPC \
+            --broadcast \
+            --verify \
+            --delay 10 \
+            -vvvv
+
+      - name: 🚀 Deploy All (Mainnet)
+        if: inputs.action == 'deploy' && inputs.contract == 'all' && inputs.network == 'base_mainnet'
+        env:
+          DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
+          BASE_MAINNET_RPC: ${{ secrets.BASE_MAINNET_RPC }}
+          BASESCAN_API_KEY: ${{ secrets.BASESCAN_API_KEY }}
+        run: |
+          echo "[WARNING] Production deployment on Base Mainnet"
+          forge script script/Deploy.s.sol:DeployAllMainnet \
+            --rpc-url $BASE_MAINNET_RPC \
+            --broadcast \
+            --verify \
+            --delay 10 \
+            -vvvv
+
+      # ========================================
+      # UPGRADE OPERATIONS - BASE SEPOLIA
+      # ========================================
+      - name: ⬆️ Upgrade NFT (Sepolia)
+        if: inputs.action == 'upgrade' && (inputs.contract == 'nft' || inputs.contract == 'all') && inputs.network == 'base_sepolia'
+        env:
+          DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
+          BASE_SEPOLIA_RPC: ${{ secrets.BASE_SEPOLIA_RPC }}
+          BASESCAN_API_KEY: ${{ secrets.BASESCAN_API_KEY }}
+        run: |
+          forge script script/Upgrade.s.sol:UpgradeNFTSepolia \
+            --rpc-url $BASE_SEPOLIA_RPC \
+            --broadcast \
+            --verify \
+            --delay 10 \
+            -vvvv
+
+      - name: ⬆️ Upgrade Payment (Sepolia)
+        if: inputs.action == 'upgrade' && (inputs.contract == 'payment' || inputs.contract == 'all') && inputs.network == 'base_sepolia'
+        env:
+          DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
+          BASE_SEPOLIA_RPC: ${{ secrets.BASE_SEPOLIA_RPC }}
+          BASESCAN_API_KEY: ${{ secrets.BASESCAN_API_KEY }}
+        run: |
+          forge script script/Upgrade.s.sol:UpgradePaymentSepolia \
+            --rpc-url $BASE_SEPOLIA_RPC \
+            --broadcast \
+            --verify \
+            --delay 10 \
+            -vvvv
+
+      - name: ⬆️ Upgrade PaymentLink (Sepolia)
+        if: inputs.action == 'upgrade' && (inputs.contract == 'link' || inputs.contract == 'all') && inputs.network == 'base_sepolia'
+        env:
+          DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
+          BASE_SEPOLIA_RPC: ${{ secrets.BASE_SEPOLIA_RPC }}
+          BASESCAN_API_KEY: ${{ secrets.BASESCAN_API_KEY }}
+        run: |
+          forge script script/Upgrade.s.sol:UpgradeLinkSepolia \
+            --rpc-url $BASE_SEPOLIA_RPC \
+            --broadcast \
+            --verify \
+            --delay 10 \
+            -vvvv
+
+      # ========================================
+      # UPGRADE OPERATIONS - BASE MAINNET
+      # ========================================
+      - name: ⬆️ Upgrade NFT (Mainnet)
+        if: inputs.action == 'upgrade' && (inputs.contract == 'nft' || inputs.contract == 'all') && inputs.network == 'base_mainnet'
+        env:
+          DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
+          BASE_MAINNET_RPC: ${{ secrets.BASE_MAINNET_RPC }}
+          BASESCAN_API_KEY: ${{ secrets.BASESCAN_API_KEY }}
+        run: |
+          echo "[WARNING] Production upgrade on Base Mainnet"
+          forge script script/Upgrade.s.sol:UpgradeNFTMainnet \
+            --rpc-url $BASE_MAINNET_RPC \
+            --broadcast \
+            --verify \
+            --delay 10 \
+            -vvvv
+
+      - name: ⬆️ Upgrade Payment (Mainnet)
+        if: inputs.action == 'upgrade' && (inputs.contract == 'payment' || inputs.contract == 'all') && inputs.network == 'base_mainnet'
+        env:
+          DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
+          BASE_MAINNET_RPC: ${{ secrets.BASE_MAINNET_RPC }}
+          BASESCAN_API_KEY: ${{ secrets.BASESCAN_API_KEY }}
+        run: |
+          echo "[WARNING] Production upgrade on Base Mainnet"
+          forge script script/Upgrade.s.sol:UpgradePaymentMainnet \
+            --rpc-url $BASE_MAINNET_RPC \
+            --broadcast \
+            --verify \
+            --delay 10 \
+            -vvvv
+
+      - name: ⬆️ Upgrade PaymentLink (Mainnet)
+        if: inputs.action == 'upgrade' && (inputs.contract == 'link' || inputs.contract == 'all') && inputs.network == 'base_mainnet'
+        env:
+          DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
+          BASE_MAINNET_RPC: ${{ secrets.BASE_MAINNET_RPC }}
+          BASESCAN_API_KEY: ${{ secrets.BASESCAN_API_KEY }}
+        run: |
+          echo "[WARNING] Production upgrade on Base Mainnet"
+          forge script script/Upgrade.s.sol:UpgradeLinkMainnet \
+            --rpc-url $BASE_MAINNET_RPC \
+            --broadcast \
+            --verify \
+            --delay 10 \
+            -vvvv
+
+      # ========================================
+      # SAVE ARTIFACTS
+      # ========================================
+      - name: Save deployment artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ inputs.action }}-${{ inputs.contract }}-${{ inputs.network }}-${{ github.run_number }}
+          path: |
+            broadcast/
+            deployments/
+          retention-days: 90
+
+      - name: Create summary
+        run: |
+          echo "## ${{ inputs.action == 'deploy' && '🚀 Deployment' || '⬆️ Upgrade' }} Complete ✅" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Network:** ${{ inputs.network }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Contract:** ${{ inputs.contract }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Action:** ${{ inputs.action }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Run:** #${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "All contracts are upgradeable using UUPS pattern." >> $GITHUB_STEP_SUMMARY

@@ -3,8 +3,10 @@ pragma solidity ^0.8.24;
 
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
-import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {ReentrancyGuardUpgradeable} from "@openzeppelin-upgradeable/contracts/security/ReentrancyGuardUpgradeable.sol";
+import {OwnableUpgradeable} from "@openzeppelin-upgradeable/contracts/access/OwnableUpgradeable.sol";
+import {Initializable} from "@openzeppelin-upgradeable/contracts/proxy/utils/Initializable.sol";
+import {UUPSUpgradeable} from "@openzeppelin-upgradeable/contracts/proxy/utils/UUPSUpgradeable.sol";
 
 interface IInvoiceNFT {
     struct Invoice {
@@ -23,7 +25,7 @@ interface IInvoiceNFT {
     function invoiceToken(uint256 tokenId) external view returns (address);
 }
 
-contract InvoicePayment is ReentrancyGuard, Ownable {
+contract InvoicePayment is Initializable, ReentrancyGuardUpgradeable, OwnableUpgradeable, UUPSUpgradeable {
     using SafeERC20 for IERC20;
 
     struct PaymentInfo {
@@ -69,12 +71,24 @@ contract InvoicePayment is ReentrancyGuard, Ownable {
     error InvoiceNotIssued();
     error AlreadyRecorded();
 
-    constructor(address _invoiceNFT, address initialOwner) {
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() {
+        _disableInitializers();
+    }
+
+    function initialize(address _invoiceNFT, address initialOwner) public initializer {
+        __ReentrancyGuard_init();
+        __Ownable_init();
+        __UUPSUpgradeable_init();
+
         invoiceNFT = IInvoiceNFT(_invoiceNFT);
+
         if (initialOwner != msg.sender) {
             transferOwnership(initialOwner);
         }
     }
+
+    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 
     function setSupportedToken(address token, bool supported) external onlyOwner {
         supportedTokens[token] = supported;
