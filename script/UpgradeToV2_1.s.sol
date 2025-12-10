@@ -138,7 +138,7 @@ contract UpgradeToV2_1Mainnet is Script {
         console.log("Existing Proxy (InvoiceNFTV2):", proxyAddress);
         console.log("Existing Payment Processor:", paymentProcessorAddress);
 
-        console.log("\n⚠️  WARNING: Upgrading production contracts on Base Mainnet");
+        console.log("\n[WARNING] Upgrading production contracts on Base Mainnet");
         console.log("Please ensure:");
         console.log("  1. All tests have passed on Base Sepolia");
         console.log("  2. Contracts have been verified on BaseScan");

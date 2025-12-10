@@ -89,7 +89,7 @@ contract BaseSepoliaIntegration is Test {
         assertEq(issuer.balance, issuerBalanceBefore + INVOICE_AMOUNT_ETH, "Issuer should receive payment");
         assertTrue(payment.isPaid(tokenId), "Invoice should be marked as paid");
 
-        console.log("✓ Invoice lifecycle completed successfully");
+        console.log("[PASS] Invoice lifecycle completed successfully");
         console.log("  Issuer received:", INVOICE_AMOUNT_ETH);
     }
 
@@ -135,9 +135,11 @@ contract BaseSepoliaIntegration is Test {
         InvoiceNFTV2.Invoice memory invoice = nft.getInvoice(tokenId);
         assertEq(uint8(invoice.status), 2, "Should be Paid");
 
-        assertEq(USDC.balanceOf(issuer), issuerBalanceBefore + INVOICE_AMOUNT_USDC, "Issuer should receive full payment");
+        assertEq(
+            USDC.balanceOf(issuer), issuerBalanceBefore + INVOICE_AMOUNT_USDC, "Issuer should receive full payment"
+        );
 
-        console.log("✓ Partial payment lifecycle completed successfully");
+        console.log("[PASS] Partial payment lifecycle completed successfully");
         console.log("  Total received:", INVOICE_AMOUNT_USDC);
     }
 
@@ -162,7 +164,7 @@ contract BaseSepoliaIntegration is Test {
         assertEq(paymentInfo.amountPaid, INVOICE_AMOUNT_USDC, "Amount should match");
         assertEq(paymentInfo.paidBy, payer, "Payer should be recorded");
 
-        console.log("✓ External payment recording successful");
+        console.log("[PASS] External payment recording successful");
     }
 
     function testCancellationWithPartialPaymentRefund() public {
@@ -202,7 +204,7 @@ contract BaseSepoliaIntegration is Test {
         InvoiceNFTV2.Invoice memory invoice = nft.getInvoice(tokenId);
         assertEq(uint8(invoice.status), 3, "Should be Cancelled");
 
-        console.log("✓ Cancellation and refund successful");
+        console.log("[PASS] Cancellation and refund successful");
         console.log("  Refunded amount:", partialAmount);
     }
 
@@ -231,7 +233,7 @@ contract BaseSepoliaIntegration is Test {
         assertTrue(payment.isPaid(tokenId), "Invoice should be paid");
         assertFalse(paymentLink.isLinkValid(linkId), "Link should be marked as used");
 
-        console.log("✓ Payment link flow successful");
+        console.log("[PASS] Payment link flow successful");
     }
 
     function testEdgeCaseRejections() public {
@@ -244,7 +246,7 @@ contract BaseSepoliaIntegration is Test {
         vm.prank(payer);
         vm.expectRevert(InvoicePayment.InvoiceNotIssued.selector);
         payment.payInvoice{value: INVOICE_AMOUNT_ETH}(tokenId);
-        console.log("✓ Correctly rejected payment on Draft");
+        console.log("[PASS] Correctly rejected payment on Draft");
 
         vm.prank(issuer);
         nft.issue(tokenId);
@@ -253,7 +255,7 @@ contract BaseSepoliaIntegration is Test {
         vm.prank(payer);
         vm.expectRevert(InvoicePayment.Overpayment.selector);
         payment.payInvoice{value: INVOICE_AMOUNT_ETH * 2}(tokenId);
-        console.log("✓ Correctly rejected overpayment");
+        console.log("[PASS] Correctly rejected overpayment");
 
         vm.prank(payer);
         payment.payInvoice{value: INVOICE_AMOUNT_ETH}(tokenId);
@@ -262,13 +264,13 @@ contract BaseSepoliaIntegration is Test {
         vm.prank(payer);
         vm.expectRevert(InvoicePayment.InvoiceAlreadyPaid.selector);
         payment.payInvoice{value: INVOICE_AMOUNT_ETH}(tokenId);
-        console.log("✓ Correctly rejected double payment");
+        console.log("[PASS] Correctly rejected double payment");
 
         console.log("Testing cancellation of paid invoice...");
         vm.prank(issuer);
         vm.expectRevert(InvoiceNFTV2.CannotCancelPaidInvoice.selector);
         nft.cancel(tokenId);
-        console.log("✓ Correctly rejected cancellation of paid invoice");
+        console.log("[PASS] Correctly rejected cancellation of paid invoice");
 
         console.log("All edge case rejections working correctly");
     }
@@ -307,13 +309,13 @@ contract BaseSepoliaIntegration is Test {
         vm.stopPrank();
 
         console.log("\nStep 5: Verify payment completion");
-        assertTrue(payment.isPaid(tokenId), "✓ Invoice marked as paid");
+        assertTrue(payment.isPaid(tokenId), "[PASS] Invoice marked as paid");
 
         InvoiceNFTV2.Invoice memory invoice = nft.getInvoice(tokenId);
-        assertEq(uint8(invoice.status), 2, "✓ Status is Paid");
+        assertEq(uint8(invoice.status), 2, "[PASS] Status is Paid");
 
         uint256 issuerBalance = USDC.balanceOf(issuer);
-        assertEq(issuerBalance, invoiceAmount, "✓ Freelancer received 100 USDC");
+        assertEq(issuerBalance, invoiceAmount, "[PASS] Freelancer received 100 USDC");
 
         console.log("\n=== Scenario Complete ===");
         console.log("Invoice paid successfully on Base Sepolia");
