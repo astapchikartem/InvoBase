@@ -1,0 +1,130 @@
+name: Upgrade to V2.1 (Block 1)
+
+on:
+  workflow_dispatch:
+    inputs:
+      network:
+        description: 'Target Network'
+        required: true
+        type: choice
+        options:
+          - base_sepolia
+          - base_mainnet
+      confirm_mainnet:
+        description: 'Type "UPGRADE" to confirm mainnet deployment'
+        required: false
+        type: string
+        default: ''
+
+jobs:
+  upgrade:
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.network }}
+
+    steps:
+      - name: Validate Mainnet Confirmation
+        if: inputs.network == 'base_mainnet' && inputs.confirm_mainnet != 'UPGRADE'
+        run: |
+          echo "::error::Mainnet upgrade requires confirmation. Type 'UPGRADE' in the confirm_mainnet field."
+          exit 1
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Install dependencies
+        run: |
+          forge install foundry-rs/forge-std@v1.7.0 --no-git
+          forge install OpenZeppelin/openzeppelin-contracts@v5.0.2 --no-git
+          forge install OpenZeppelin/openzeppelin-contracts-upgradeable@v5.0.2 --no-git
+
+      - name: Build contracts
+        run: forge build --sizes
+
+      - name: Run tests
+        run: forge test -vvv
+
+      # ========================================
+      # UPGRADE TO V2.1 - BASE SEPOLIA
+      # ========================================
+      - name: ⬆️ Upgrade to V2.1 (Base Sepolia)
+        if: inputs.network == 'base_sepolia'
+        env:
+          DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
+          BASE_SEPOLIA_RPC: ${{ secrets.BASE_SEPOLIA_RPC }}
+          BASESCAN_API_KEY: ${{ secrets.BASESCAN_API_KEY }}
+        run: |
+          echo "=== Upgrading InvoBase V2 to V2.1 on Base Sepolia ==="
+          echo "Block 1 Improvements:"
+          echo "  - Tightened invoice lifecycle state transitions"
+          echo "  - Strengthened payment validation"
+          echo "  - Improved partial payment refunds"
+          echo "  - Parameter modification locks"
+          echo "  - Double payment prevention"
+          echo ""
+
+          forge script script/UpgradeToV2_1.s.sol:UpgradeToV2_1Sepolia \
+            --rpc-url $BASE_SEPOLIA_RPC \
+            --broadcast \
+            --verify \
+            --delay 10 \
+            -vvvv
+
+      # ========================================
+      # UPGRADE TO V2.1 - BASE MAINNET
+      # ========================================
+      - name: ⬆️ Upgrade to V2.1 (Base Mainnet)
+        if: inputs.network == 'base_mainnet'
+        env:
+          DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
+          BASE_MAINNET_RPC: ${{ secrets.BASE_MAINNET_RPC }}
+          BASESCAN_API_KEY: ${{ secrets.BASESCAN_API_KEY }}
+        run: |
+          echo "=== Upgrading InvoBase V2 to V2.1 on Base Mainnet ==="
+          echo ""
+          echo "[WARNING] Production deployment on Base Mainnet"
+          echo "Please ensure:"
+          echo "  1. All tests passed on Base Sepolia"
+          echo "  2. Contracts verified on BaseScan"
+          echo "  3. Upgrade reviewed and approved"
+          echo ""
+
+          forge script script/UpgradeToV2_1.s.sol:UpgradeToV2_1Mainnet \
+            --rpc-url $BASE_MAINNET_RPC \
+            --broadcast \
+            --verify \
+            --delay 10 \
+            -vvvv
+
+      # ========================================
+      # SAVE DEPLOYMENT ARTIFACTS
+      # ========================================
+      - name: Save deployment artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: upgrade-v2.1-${{ inputs.network }}-${{ github.run_number }}
+          path: |
+            broadcast/
+            deployments/
+          retention-days: 90
+
+      - name: Create deployment summary
+        run: |
+          echo "## V2.1 Upgrade Complete ✅" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Network:** ${{ inputs.network }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Run Number:** ${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Block 1 Improvements" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Tightened invoice lifecycle state transitions" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Strengthened payment validation (Draft/Cancelled checks)" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Improved partial payment refunds" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Parameter modification locks (after issuance)" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Double payment prevention" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Deployment Details" >> $GITHUB_STEP_SUMMARY
+          echo "Check the artifacts for deployment addresses and transaction details." >> $GITHUB_STEP_SUMMARY
