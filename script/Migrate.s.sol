@@ -64,16 +64,24 @@ contract MigrateSepolia is Script {
 
         // 3. Update paymentProcessor on NFT
         console.log("\n=== Step 3: Update Payment Processor on NFT ===");
-        console.log("Calling setPaymentProcessor on NFT proxy:", nftProxy);
+        // Reload nftProxy to ensure correct address (compiler optimization issue)
+        address nft;
+        {
+            string memory root2 = vm.projectRoot();
+            string memory path2 = string.concat(root2, "/deployments/base-sepolia.json");
+            string memory json2 = vm.readFile(path2);
+            nft = json2.readAddress(".nft");
+        }
+        console.log("Calling setPaymentProcessor on NFT proxy:", nft);
         console.log("Setting new payment processor to:", payment);
-        InvoiceNFTV2(nftProxy).setPaymentProcessor(payment);
+        InvoiceNFTV2(nft).setPaymentProcessor(payment);
         console.log("Payment processor updated successfully");
 
         // 4. Deploy PaymentLink with proxy
         console.log("\n=== Step 4: Deploy PaymentLink with Proxy ===");
         address linkImpl = address(new PaymentLink());
         address link =
-            address(new ERC1967Proxy(linkImpl, abi.encodeCall(PaymentLink.initialize, (payment, nftProxy, deployer))));
+            address(new ERC1967Proxy(linkImpl, abi.encodeCall(PaymentLink.initialize, (payment, nft, deployer))));
         console.log("PaymentLink Proxy:", link);
         console.log("PaymentLink Implementation:", linkImpl);
 
@@ -87,14 +95,14 @@ contract MigrateSepolia is Script {
         console.log("\n=== Migration Complete ===");
         console.log("All contracts now upgradeable!");
         console.log("\nNew Addresses:");
-        console.log("  NFT Proxy:", nftProxy, "(unchanged)");
+        console.log("  NFT Proxy:", nft, "(unchanged)");
         console.log("  NFT Implementation:", nftImpl, "(new)");
         console.log("  Payment Proxy:", payment, "(new - upgradeable)");
         console.log("  Payment Implementation:", paymentImpl, "(new)");
         console.log("  Link Proxy:", link, "(new - upgradeable)");
         console.log("  Link Implementation:", linkImpl, "(new)");
 
-        _saveMigration(nftProxy, nftImpl, payment, paymentImpl, link, linkImpl, deployer);
+        _saveMigration(nft, nftImpl, payment, paymentImpl, link, linkImpl, deployer);
     }
 
     function _saveMigration(
@@ -170,16 +178,24 @@ contract MigrateMainnet is Script {
 
         // 3. Update paymentProcessor on NFT
         console.log("\n=== Step 3: Update Payment Processor on NFT ===");
-        console.log("Calling setPaymentProcessor on NFT proxy:", nftProxy);
+        // Reload nftProxy to ensure correct address (compiler optimization issue)
+        address nft;
+        {
+            string memory root2 = vm.projectRoot();
+            string memory path2 = string.concat(root2, "/deployments/base-mainnet.json");
+            string memory json2 = vm.readFile(path2);
+            nft = json2.readAddress(".nft");
+        }
+        console.log("Calling setPaymentProcessor on NFT proxy:", nft);
         console.log("Setting new payment processor to:", payment);
-        InvoiceNFTV2(nftProxy).setPaymentProcessor(payment);
+        InvoiceNFTV2(nft).setPaymentProcessor(payment);
         console.log("Payment processor updated successfully");
 
         // 4. Deploy PaymentLink with proxy
         console.log("\n=== Step 4: Deploy PaymentLink with Proxy ===");
         address linkImpl = address(new PaymentLink());
         address link =
-            address(new ERC1967Proxy(linkImpl, abi.encodeCall(PaymentLink.initialize, (payment, nftProxy, deployer))));
+            address(new ERC1967Proxy(linkImpl, abi.encodeCall(PaymentLink.initialize, (payment, nft, deployer))));
         console.log("PaymentLink Proxy:", link);
         console.log("PaymentLink Implementation:", linkImpl);
 
@@ -193,14 +209,14 @@ contract MigrateMainnet is Script {
         console.log("\n=== Migration Complete ===");
         console.log("All contracts now upgradeable!");
         console.log("\nNew Addresses:");
-        console.log("  NFT Proxy:", nftProxy, "(unchanged)");
+        console.log("  NFT Proxy:", nft, "(unchanged)");
         console.log("  NFT Implementation:", nftImpl, "(new)");
         console.log("  Payment Proxy:", payment, "(new - upgradeable)");
         console.log("  Payment Implementation:", paymentImpl, "(new)");
         console.log("  Link Proxy:", link, "(new - upgradeable)");
         console.log("  Link Implementation:", linkImpl, "(new)");
 
-        _saveMigration(nftProxy, nftImpl, payment, paymentImpl, link, linkImpl, deployer);
+        _saveMigration(nft, nftImpl, payment, paymentImpl, link, linkImpl, deployer);
     }
 
     function _saveMigration(
