@@ -31,14 +31,14 @@ contract MigrateSepolia is Script {
         console.log("=== Migrating to Upgradeable System on Base Sepolia ===");
         console.log("Deployer:", deployer);
 
-        // Load existing addresses - scope strings to reduce stack pressure
-        address nftProxy;
+        // Hardcode NFT proxy address to avoid variable corruption issues
+        address nftProxy = 0x59aD7168615DeE3024c4d2719eDAb656ad9cCE9c;
+
+        // Log existing deployment info
         {
             string memory root = vm.projectRoot();
             string memory path = string.concat(root, "/deployments/base-sepolia.json");
             string memory json = vm.readFile(path);
-
-            nftProxy = json.readAddress(".nft");
 
             console.log("\n=== Existing Deployment ===");
             console.log("InvoiceNFTV2 Proxy:", nftProxy);
@@ -64,14 +64,12 @@ contract MigrateSepolia is Script {
 
         // 3. Update paymentProcessor on NFT
         console.log("\n=== Step 3: Update Payment Processor on NFT ===");
-        // Hardcode NFT address to bypass any variable issues
-        address nftProxyHardcoded = 0x59aD7168615DeE3024c4d2719eDAb656ad9cCE9c;
-        console.log("Calling setPaymentProcessor on NFT proxy:", nftProxyHardcoded);
+        console.log("Calling setPaymentProcessor on NFT proxy:", nftProxy);
         console.log("Setting new payment processor to:", payment);
 
         // Low-level call: setPaymentProcessor(address)
         bytes memory callData = abi.encodeWithSelector(bytes4(keccak256("setPaymentProcessor(address)")), payment);
-        (bool success, bytes memory returnData) = nftProxyHardcoded.call(callData);
+        (bool success, bytes memory returnData) = nftProxy.call(callData);
         require(success, string(abi.encodePacked("setPaymentProcessor failed: ", returnData)));
         console.log("Payment processor updated successfully");
 
