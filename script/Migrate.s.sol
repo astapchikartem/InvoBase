@@ -64,8 +64,11 @@ contract MigrateSepolia is Script {
 
         // 3. Update paymentProcessor on NFT
         console.log("\n=== Step 3: Update Payment Processor on NFT ===");
-        InvoiceNFTV2(nftProxy).setPaymentProcessor(payment);
-        console.log("Payment processor updated");
+        console.log("Calling setPaymentProcessor on NFT proxy:", nftProxy);
+        console.log("Setting new payment processor to:", payment);
+        InvoiceNFTV2 nftContract = InvoiceNFTV2(nftProxy);
+        nftContract.setPaymentProcessor(payment);
+        console.log("Payment processor updated successfully");
 
         // 4. Deploy PaymentLink with proxy
         console.log("\n=== Step 4: Deploy PaymentLink with Proxy ===");
@@ -173,8 +176,11 @@ contract MigrateMainnet is Script {
 
         // 3. Update paymentProcessor on NFT
         console.log("\n=== Step 3: Update Payment Processor on NFT ===");
-        InvoiceNFTV2(nftProxy).setPaymentProcessor(payment);
-        console.log("Payment processor updated");
+        console.log("Calling setPaymentProcessor on NFT proxy:", nftProxy);
+        console.log("Setting new payment processor to:", payment);
+        InvoiceNFTV2 nftContract = InvoiceNFTV2(nftProxy);
+        nftContract.setPaymentProcessor(payment);
+        console.log("Payment processor updated successfully");
 
         // 4. Deploy PaymentLink with proxy
         console.log("\n=== Step 4: Deploy PaymentLink with Proxy ===");
