@@ -64,7 +64,7 @@ contract MigrateSepolia is Script {
 
         // 3. Update paymentProcessor on NFT
         console.log("\n=== Step 3: Update Payment Processor on NFT ===");
-        // Call setPaymentProcessor inline to avoid compiler optimization issues
+        // Use low-level call to bypass compiler optimization
         {
             string memory root2 = vm.projectRoot();
             string memory path2 = string.concat(root2, "/deployments/base-sepolia.json");
@@ -73,7 +73,14 @@ contract MigrateSepolia is Script {
 
             console.log("Calling setPaymentProcessor on NFT proxy:", nftAddress);
             console.log("Setting new payment processor to:", payment);
-            InvoiceNFTV2(nftAddress).setPaymentProcessor(payment);
+
+            // Low-level call: setPaymentProcessor(address)
+            bytes memory callData = abi.encodeWithSelector(
+                bytes4(keccak256("setPaymentProcessor(address)")),
+                payment
+            );
+            (bool success, bytes memory returnData) = nftAddress.call(callData);
+            require(success, string(abi.encodePacked("setPaymentProcessor failed: ", returnData)));
         }
         console.log("Payment processor updated successfully");
 
@@ -178,7 +185,7 @@ contract MigrateMainnet is Script {
 
         // 3. Update paymentProcessor on NFT
         console.log("\n=== Step 3: Update Payment Processor on NFT ===");
-        // Call setPaymentProcessor inline to avoid compiler optimization issues
+        // Use low-level call to bypass compiler optimization
         {
             string memory root2 = vm.projectRoot();
             string memory path2 = string.concat(root2, "/deployments/base-mainnet.json");
@@ -187,7 +194,14 @@ contract MigrateMainnet is Script {
 
             console.log("Calling setPaymentProcessor on NFT proxy:", nftAddress);
             console.log("Setting new payment processor to:", payment);
-            InvoiceNFTV2(nftAddress).setPaymentProcessor(payment);
+
+            // Low-level call: setPaymentProcessor(address)
+            bytes memory callData = abi.encodeWithSelector(
+                bytes4(keccak256("setPaymentProcessor(address)")),
+                payment
+            );
+            (bool success, bytes memory returnData) = nftAddress.call(callData);
+            require(success, string(abi.encodePacked("setPaymentProcessor failed: ", returnData)));
         }
         console.log("Payment processor updated successfully");
 
