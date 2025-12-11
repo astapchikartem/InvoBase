@@ -21,6 +21,16 @@ import {stdJson} from "forge-std/StdJson.sol";
  *   forge script script/Migrate.s.sol:MigrateSepolia --rpc-url $RPC --broadcast --verify
  */
 
+struct MigrationAddresses {
+    address nftProxy;
+    address nftImpl;
+    address paymentProxy;
+    address paymentImpl;
+    address linkProxy;
+    address linkImpl;
+    address deployer;
+}
+
 contract MigrateSepolia is Script {
     using stdJson for string;
 
@@ -98,30 +108,33 @@ contract MigrateSepolia is Script {
         console.log("  Link Proxy:", link, "(new - upgradeable)");
         console.log("  Link Implementation:", linkImpl, "(new)");
 
-        _saveMigration(nftProxy, nftImpl, payment, paymentImpl, link, linkImpl, deployer);
+        _saveMigration(
+            MigrationAddresses({
+                nftProxy: nftProxy,
+                nftImpl: nftImpl,
+                paymentProxy: payment,
+                paymentImpl: paymentImpl,
+                linkProxy: link,
+                linkImpl: linkImpl,
+                deployer: deployer
+            }),
+            "base-sepolia"
+        );
     }
 
-    function _saveMigration(
-        address nftProxy,
-        address nftImpl,
-        address paymentProxy,
-        address paymentImpl,
-        address linkProxy,
-        address linkImpl,
-        address deployer
-    ) internal {
+    function _saveMigration(MigrationAddresses memory addrs, string memory network) internal {
         string memory root = vm.projectRoot();
-        string memory path = string.concat(root, "/deployments/base-sepolia.json");
+        string memory path = string.concat(root, "/deployments/", network, ".json");
 
         string memory json = "migration";
-        vm.serializeString(json, "network", "base-sepolia");
-        vm.serializeAddress(json, "nft", nftProxy);
-        vm.serializeAddress(json, "nftImpl", nftImpl);
-        vm.serializeAddress(json, "payment", paymentProxy);
-        vm.serializeAddress(json, "paymentImpl", paymentImpl);
-        vm.serializeAddress(json, "paymentLink", linkProxy);
-        vm.serializeAddress(json, "paymentLinkImpl", linkImpl);
-        vm.serializeAddress(json, "deployer", deployer);
+        vm.serializeString(json, "network", network);
+        vm.serializeAddress(json, "nft", addrs.nftProxy);
+        vm.serializeAddress(json, "nftImpl", addrs.nftImpl);
+        vm.serializeAddress(json, "payment", addrs.paymentProxy);
+        vm.serializeAddress(json, "paymentImpl", addrs.paymentImpl);
+        vm.serializeAddress(json, "paymentLink", addrs.linkProxy);
+        vm.serializeAddress(json, "paymentLinkImpl", addrs.linkImpl);
+        vm.serializeAddress(json, "deployer", addrs.deployer);
         vm.serializeUint(json, "chainId", block.chainid);
         vm.serializeUint(json, "blockNumber", block.number);
         string memory finalJson = vm.serializeUint(json, "timestamp", block.timestamp);
@@ -216,30 +229,33 @@ contract MigrateMainnet is Script {
         console.log("  Link Proxy:", link, "(new - upgradeable)");
         console.log("  Link Implementation:", linkImpl, "(new)");
 
-        _saveMigration(nftProxy, nftImpl, payment, paymentImpl, link, linkImpl, deployer);
+        _saveMigration(
+            MigrationAddresses({
+                nftProxy: nftProxy,
+                nftImpl: nftImpl,
+                paymentProxy: payment,
+                paymentImpl: paymentImpl,
+                linkProxy: link,
+                linkImpl: linkImpl,
+                deployer: deployer
+            }),
+            "base-mainnet"
+        );
     }
 
-    function _saveMigration(
-        address nftProxy,
-        address nftImpl,
-        address paymentProxy,
-        address paymentImpl,
-        address linkProxy,
-        address linkImpl,
-        address deployer
-    ) internal {
+    function _saveMigration(MigrationAddresses memory addrs, string memory network) internal {
         string memory root = vm.projectRoot();
-        string memory path = string.concat(root, "/deployments/base-mainnet.json");
+        string memory path = string.concat(root, "/deployments/", network, ".json");
 
         string memory json = "migration";
-        vm.serializeString(json, "network", "base-mainnet");
-        vm.serializeAddress(json, "nft", nftProxy);
-        vm.serializeAddress(json, "nftImpl", nftImpl);
-        vm.serializeAddress(json, "payment", paymentProxy);
-        vm.serializeAddress(json, "paymentImpl", paymentImpl);
-        vm.serializeAddress(json, "paymentLink", linkProxy);
-        vm.serializeAddress(json, "paymentLinkImpl", linkImpl);
-        vm.serializeAddress(json, "deployer", deployer);
+        vm.serializeString(json, "network", network);
+        vm.serializeAddress(json, "nft", addrs.nftProxy);
+        vm.serializeAddress(json, "nftImpl", addrs.nftImpl);
+        vm.serializeAddress(json, "payment", addrs.paymentProxy);
+        vm.serializeAddress(json, "paymentImpl", addrs.paymentImpl);
+        vm.serializeAddress(json, "paymentLink", addrs.linkProxy);
+        vm.serializeAddress(json, "paymentLinkImpl", addrs.linkImpl);
+        vm.serializeAddress(json, "deployer", addrs.deployer);
         vm.serializeUint(json, "chainId", block.chainid);
         vm.serializeUint(json, "blockNumber", block.number);
         string memory finalJson = vm.serializeUint(json, "timestamp", block.timestamp);
