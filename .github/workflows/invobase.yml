@@ -17,6 +17,7 @@ on:
         options:
           - deploy
           - upgrade
+          - migrate
       contract:
         description: 'Contract (all or specific)'
         required: true
@@ -86,6 +87,49 @@ jobs:
         run: |
           echo "[WARNING] Production deployment on Base Mainnet"
           forge script script/Deploy.s.sol:DeployAllMainnet \
+            --rpc-url $BASE_MAINNET_RPC \
+            --broadcast \
+            --verify \
+            --delay 10 \
+            -vvvv
+
+      # ========================================
+      # MIGRATE OPERATIONS
+      # ========================================
+      - name: 🔄 Migrate to Upgradeable (Sepolia)
+        if: inputs.action == 'migrate' && inputs.network == 'base_sepolia'
+        env:
+          DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
+          BASE_SEPOLIA_RPC: ${{ secrets.BASE_SEPOLIA_RPC }}
+          BASESCAN_API_KEY: ${{ secrets.BASESCAN_API_KEY }}
+        run: |
+          echo "=== Migrating to Upgradeable System ==="
+          echo "This will:"
+          echo "  1. Upgrade InvoiceNFTV2"
+          echo "  2. Deploy new InvoicePayment with proxy"
+          echo "  3. Deploy new PaymentLink with proxy"
+          echo "  4. Update paymentProcessor on NFT"
+          forge script script/Migrate.s.sol:MigrateSepolia \
+            --rpc-url $BASE_SEPOLIA_RPC \
+            --broadcast \
+            --verify \
+            --delay 10 \
+            -vvvv
+
+      - name: 🔄 Migrate to Upgradeable (Mainnet)
+        if: inputs.action == 'migrate' && inputs.network == 'base_mainnet'
+        env:
+          DEPLOYER_PRIVATE_KEY: ${{ secrets.DEPLOYER_PRIVATE_KEY }}
+          BASE_MAINNET_RPC: ${{ secrets.BASE_MAINNET_RPC }}
+          BASESCAN_API_KEY: ${{ secrets.BASESCAN_API_KEY }}
+        run: |
+          echo "[WARNING] Production migration on Base Mainnet"
+          echo "This will:"
+          echo "  1. Upgrade InvoiceNFTV2"
+          echo "  2. Deploy new InvoicePayment with proxy"
+          echo "  3. Deploy new PaymentLink with proxy"
+          echo "  4. Update paymentProcessor on NFT"
+          forge script script/Migrate.s.sol:MigrateMainnet \
             --rpc-url $BASE_MAINNET_RPC \
             --broadcast \
             --verify \
