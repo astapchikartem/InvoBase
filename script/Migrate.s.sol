@@ -31,17 +31,20 @@ contract MigrateSepolia is Script {
         console.log("=== Migrating to Upgradeable System on Base Sepolia ===");
         console.log("Deployer:", deployer);
 
-        // Load existing addresses
-        string memory root = vm.projectRoot();
-        string memory path = string.concat(root, "/deployments/base-sepolia.json");
-        string memory json = vm.readFile(path);
+        // Load existing addresses - scope strings to reduce stack pressure
+        address nftProxy;
+        {
+            string memory root = vm.projectRoot();
+            string memory path = string.concat(root, "/deployments/base-sepolia.json");
+            string memory json = vm.readFile(path);
 
-        address nftProxy = json.readAddress(".nft");
+            nftProxy = json.readAddress(".nft");
 
-        console.log("\n=== Existing Deployment ===");
-        console.log("InvoiceNFTV2 Proxy:", nftProxy);
-        console.log("Old InvoicePayment (no proxy):", json.readAddress(".payment"));
-        console.log("Old PaymentLink (no proxy):", json.readAddress(".paymentLink"));
+            console.log("\n=== Existing Deployment ===");
+            console.log("InvoiceNFTV2 Proxy:", nftProxy);
+            console.log("Old InvoicePayment (no proxy):", json.readAddress(".payment"));
+            console.log("Old PaymentLink (no proxy):", json.readAddress(".paymentLink"));
+        }
 
         vm.startBroadcast(deployerPrivateKey);
 
@@ -134,17 +137,20 @@ contract MigrateMainnet is Script {
         console.log("=== Migrating to Upgradeable System on Base Mainnet ===");
         console.log("Deployer:", deployer);
 
-        // Load existing addresses
-        string memory root = vm.projectRoot();
-        string memory path = string.concat(root, "/deployments/base-mainnet.json");
-        string memory json = vm.readFile(path);
+        // Load existing addresses - scope strings to reduce stack pressure
+        address nftProxy;
+        {
+            string memory root = vm.projectRoot();
+            string memory path = string.concat(root, "/deployments/base-mainnet.json");
+            string memory json = vm.readFile(path);
 
-        address nftProxy = json.readAddress(".nft");
+            nftProxy = json.readAddress(".nft");
 
-        console.log("\n=== Existing Deployment ===");
-        console.log("InvoiceNFTV2 Proxy:", nftProxy);
-        console.log("Old InvoicePayment (no proxy):", json.readAddress(".payment"));
-        console.log("Old PaymentLink (no proxy):", json.readAddress(".paymentLink"));
+            console.log("\n=== Existing Deployment ===");
+            console.log("InvoiceNFTV2 Proxy:", nftProxy);
+            console.log("Old InvoicePayment (no proxy):", json.readAddress(".payment"));
+            console.log("Old PaymentLink (no proxy):", json.readAddress(".paymentLink"));
+        }
 
         vm.startBroadcast(deployerPrivateKey);
 
