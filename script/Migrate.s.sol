@@ -75,10 +75,7 @@ contract MigrateSepolia is Script {
             console.log("Setting new payment processor to:", payment);
 
             // Low-level call: setPaymentProcessor(address)
-            bytes memory callData = abi.encodeWithSelector(
-                bytes4(keccak256("setPaymentProcessor(address)")),
-                payment
-            );
+            bytes memory callData = abi.encodeWithSelector(bytes4(keccak256("setPaymentProcessor(address)")), payment);
             (bool success, bytes memory returnData) = nftAddress.call(callData);
             require(success, string(abi.encodePacked("setPaymentProcessor failed: ", returnData)));
         }
@@ -196,10 +193,7 @@ contract MigrateMainnet is Script {
             console.log("Setting new payment processor to:", payment);
 
             // Low-level call: setPaymentProcessor(address)
-            bytes memory callData = abi.encodeWithSelector(
-                bytes4(keccak256("setPaymentProcessor(address)")),
-                payment
-            );
+            bytes memory callData = abi.encodeWithSelector(bytes4(keccak256("setPaymentProcessor(address)")), payment);
             (bool success, bytes memory returnData) = nftAddress.call(callData);
             require(success, string(abi.encodePacked("setPaymentProcessor failed: ", returnData)));
         }
