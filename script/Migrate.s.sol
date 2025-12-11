@@ -32,19 +32,16 @@ contract MigrateSepolia is Script {
         console.log("Deployer:", deployer);
 
         // Load existing addresses
-        address nftProxy;
-        {
-            string memory root = vm.projectRoot();
-            string memory path = string.concat(root, "/deployments/base-sepolia.json");
-            string memory json = vm.readFile(path);
+        string memory root = vm.projectRoot();
+        string memory path = string.concat(root, "/deployments/base-sepolia.json");
+        string memory json = vm.readFile(path);
 
-            nftProxy = json.readAddress(".nft");
+        address nftProxy = json.readAddress(".nft");
 
-            console.log("\n=== Existing Deployment ===");
-            console.log("InvoiceNFTV2 Proxy:", nftProxy);
-            console.log("Old InvoicePayment (no proxy):", json.readAddress(".payment"));
-            console.log("Old PaymentLink (no proxy):", json.readAddress(".paymentLink"));
-        }
+        console.log("\n=== Existing Deployment ===");
+        console.log("InvoiceNFTV2 Proxy:", nftProxy);
+        console.log("Old InvoicePayment (no proxy):", json.readAddress(".payment"));
+        console.log("Old PaymentLink (no proxy):", json.readAddress(".paymentLink"));
 
         vm.startBroadcast(deployerPrivateKey);
 
@@ -138,19 +135,16 @@ contract MigrateMainnet is Script {
         console.log("Deployer:", deployer);
 
         // Load existing addresses
-        address nftProxy;
-        {
-            string memory root = vm.projectRoot();
-            string memory path = string.concat(root, "/deployments/base-mainnet.json");
-            string memory json = vm.readFile(path);
+        string memory root = vm.projectRoot();
+        string memory path = string.concat(root, "/deployments/base-mainnet.json");
+        string memory json = vm.readFile(path);
 
-            nftProxy = json.readAddress(".nft");
+        address nftProxy = json.readAddress(".nft");
 
-            console.log("\n=== Existing Deployment ===");
-            console.log("InvoiceNFTV2 Proxy:", nftProxy);
-            console.log("Old InvoicePayment (no proxy):", json.readAddress(".payment"));
-            console.log("Old PaymentLink (no proxy):", json.readAddress(".paymentLink"));
-        }
+        console.log("\n=== Existing Deployment ===");
+        console.log("InvoiceNFTV2 Proxy:", nftProxy);
+        console.log("Old InvoicePayment (no proxy):", json.readAddress(".payment"));
+        console.log("Old PaymentLink (no proxy):", json.readAddress(".paymentLink"));
 
         vm.startBroadcast(deployerPrivateKey);
 
