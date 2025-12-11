@@ -64,21 +64,15 @@ contract MigrateSepolia is Script {
 
         // 3. Update paymentProcessor on NFT
         console.log("\n=== Step 3: Update Payment Processor on NFT ===");
-        // Use low-level call to bypass compiler optimization
-        {
-            string memory root2 = vm.projectRoot();
-            string memory path2 = string.concat(root2, "/deployments/base-sepolia.json");
-            string memory json2 = vm.readFile(path2);
-            address nftAddress = json2.readAddress(".nft");
+        // Hardcode NFT address to bypass any variable issues
+        address nftProxyHardcoded = 0x59aD7168615DeE3024c4d2719eDAb656ad9cCE9c;
+        console.log("Calling setPaymentProcessor on NFT proxy:", nftProxyHardcoded);
+        console.log("Setting new payment processor to:", payment);
 
-            console.log("Calling setPaymentProcessor on NFT proxy:", nftAddress);
-            console.log("Setting new payment processor to:", payment);
-
-            // Low-level call: setPaymentProcessor(address)
-            bytes memory callData = abi.encodeWithSelector(bytes4(keccak256("setPaymentProcessor(address)")), payment);
-            (bool success, bytes memory returnData) = nftAddress.call(callData);
-            require(success, string(abi.encodePacked("setPaymentProcessor failed: ", returnData)));
-        }
+        // Low-level call: setPaymentProcessor(address)
+        bytes memory callData = abi.encodeWithSelector(bytes4(keccak256("setPaymentProcessor(address)")), payment);
+        (bool success, bytes memory returnData) = nftProxyHardcoded.call(callData);
+        require(success, string(abi.encodePacked("setPaymentProcessor failed: ", returnData)));
         console.log("Payment processor updated successfully");
 
         // 4. Deploy PaymentLink with proxy
@@ -182,21 +176,21 @@ contract MigrateMainnet is Script {
 
         // 3. Update paymentProcessor on NFT
         console.log("\n=== Step 3: Update Payment Processor on NFT ===");
-        // Use low-level call to bypass compiler optimization
+        // Load NFT address from deployment file
+        address nftProxyAddress;
         {
             string memory root2 = vm.projectRoot();
             string memory path2 = string.concat(root2, "/deployments/base-mainnet.json");
             string memory json2 = vm.readFile(path2);
-            address nftAddress = json2.readAddress(".nft");
-
-            console.log("Calling setPaymentProcessor on NFT proxy:", nftAddress);
-            console.log("Setting new payment processor to:", payment);
-
-            // Low-level call: setPaymentProcessor(address)
-            bytes memory callData = abi.encodeWithSelector(bytes4(keccak256("setPaymentProcessor(address)")), payment);
-            (bool success, bytes memory returnData) = nftAddress.call(callData);
-            require(success, string(abi.encodePacked("setPaymentProcessor failed: ", returnData)));
+            nftProxyAddress = json2.readAddress(".nft");
         }
+        console.log("Calling setPaymentProcessor on NFT proxy:", nftProxyAddress);
+        console.log("Setting new payment processor to:", payment);
+
+        // Low-level call: setPaymentProcessor(address)
+        bytes memory callData = abi.encodeWithSelector(bytes4(keccak256("setPaymentProcessor(address)")), payment);
+        (bool success, bytes memory returnData) = nftProxyAddress.call(callData);
+        require(success, string(abi.encodePacked("setPaymentProcessor failed: ", returnData)));
         console.log("Payment processor updated successfully");
 
         // 4. Deploy PaymentLink with proxy
