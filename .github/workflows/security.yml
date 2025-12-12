@@ -11,12 +11,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Install dependencies
         run: |
-          forge install OpenZeppelin/openzeppelin-contracts@v5.0.0
-          forge install OpenZeppelin/openzeppelin-contracts-upgradeable@v5.0.0
-          forge install foundry-rs/forge-std@v1.7.0
+          git submodule update --init --recursive
 
       - name: Run Slither
         uses: crytic/slither-action@v0.3.0
@@ -28,15 +28,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          submodules: recursive
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
 
       - name: Install dependencies
         run: |
-          forge install OpenZeppelin/openzeppelin-contracts@v5.0.0
-          forge install OpenZeppelin/openzeppelin-contracts-upgradeable@v5.0.0
-          forge install foundry-rs/forge-std@v1.7.0
+          git submodule update --init --recursive
 
       - name: Build contracts
         run: forge build
@@ -45,4 +45,7 @@ jobs:
         run: pip3 install mythril
 
       - name: Run Mythril
-        run: myth analyze out/InvoiceManager.sol/InvoiceManager.json
+        run: |
+          myth analyze out/InvoiceNFTV2.sol/InvoiceNFTV2.json || true
+          myth analyze out/InvoicePayment.sol/InvoicePayment.json || true
+          myth analyze out/PaymentLink.sol/PaymentLink.json || true

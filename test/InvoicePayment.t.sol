@@ -29,7 +29,11 @@ contract InvoicePaymentTest is Test {
         ERC1967Proxy proxy = new ERC1967Proxy(address(implementation), initData);
         nft = InvoiceNFTV2(address(proxy));
 
-        payment = new InvoicePayment(address(nft), owner);
+        InvoicePayment paymentImpl = new InvoicePayment();
+        bytes memory paymentInitData = abi.encodeCall(InvoicePayment.initialize, (address(nft), owner));
+        ERC1967Proxy paymentProxy = new ERC1967Proxy(address(paymentImpl), paymentInitData);
+        payment = InvoicePayment(payable(address(paymentProxy)));
+
         nft.initializeV2(address(payment));
 
         usdc = new MockERC20("USD Coin", "USDC", 6);
@@ -88,10 +92,13 @@ contract InvoicePaymentTest is Test {
         uint256 tokenId = nft.mint(payer, INVOICE_AMOUNT, block.timestamp + DUE_DATE_OFFSET);
 
         vm.prank(issuer);
-        nft.issue(tokenId);
+        nft.setPartialPayment(tokenId, true);
 
         vm.prank(issuer);
-        payment.setPartialPaymentAllowed(tokenId, true);
+        nft.setInvoiceToken(tokenId, address(usdc));
+
+        vm.prank(issuer);
+        nft.issue(tokenId);
 
         uint256 partialAmount = INVOICE_AMOUNT / 2;
 
@@ -179,7 +186,7 @@ contract InvoicePaymentTest is Test {
 
         vm.prank(payer);
         vm.expectRevert(InvoicePayment.Unauthorized.selector);
-        payment.setPartialPaymentAllowed(tokenId, true);
+        nft.setPartialPayment(tokenId, true);
     }
 
     function testOnlyIssuerCanRecordExternalPayment() public {
@@ -215,10 +222,13 @@ contract InvoicePaymentTest is Test {
         assertEq(payment.getRemainingAmount(tokenId), INVOICE_AMOUNT);
 
         vm.prank(issuer);
-        nft.issue(tokenId);
+        nft.setPartialPayment(tokenId, true);
 
         vm.prank(issuer);
-        payment.setPartialPaymentAllowed(tokenId, true);
+        nft.setInvoiceToken(tokenId, address(usdc));
+
+        vm.prank(issuer);
+        nft.issue(tokenId);
 
         uint256 partialAmount = INVOICE_AMOUNT / 4;
 

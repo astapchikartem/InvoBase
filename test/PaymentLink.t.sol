@@ -33,10 +33,17 @@ contract PaymentLinkTest is Test {
         ERC1967Proxy proxy = new ERC1967Proxy(address(implementation), initData);
         nft = InvoiceNFTV2(address(proxy));
 
-        payment = new InvoicePayment(address(nft), owner);
+        InvoicePayment paymentImpl = new InvoicePayment();
+        bytes memory paymentInitData = abi.encodeCall(InvoicePayment.initialize, (address(nft), owner));
+        ERC1967Proxy paymentProxy = new ERC1967Proxy(address(paymentImpl), paymentInitData);
+        payment = InvoicePayment(payable(address(paymentProxy)));
+
         nft.initializeV2(address(payment));
 
-        paymentLink = new PaymentLink(address(payment), address(nft), owner);
+        PaymentLink linkImpl = new PaymentLink();
+        bytes memory linkInitData = abi.encodeCall(PaymentLink.initialize, (address(payment), address(nft), owner));
+        ERC1967Proxy linkProxy = new ERC1967Proxy(address(linkImpl), linkInitData);
+        paymentLink = PaymentLink(payable(address(linkProxy)));
 
         usdc = new MockERC20("USD Coin", "USDC", 6);
         payment.setSupportedToken(address(usdc), true);
@@ -59,7 +66,7 @@ contract PaymentLinkTest is Test {
         assertTrue(linkId != bytes32(0));
         assertTrue(paymentLink.isLinkValid(linkId));
 
-        PaymentLink.PaymentLink memory link = paymentLink.getLink(linkId);
+        PaymentLink.Link memory link = paymentLink.getLink(linkId);
         assertEq(link.invoiceId, tokenId);
         assertEq(link.expiry, expiry);
         assertFalse(link.used);
@@ -85,7 +92,7 @@ contract PaymentLinkTest is Test {
         assertEq(issuer.balance, issuerBalanceBefore + 1 ether);
         assertTrue(payment.isPaid(tokenId));
 
-        PaymentLink.PaymentLink memory link = paymentLink.getLink(linkId);
+        PaymentLink.Link memory link = paymentLink.getLink(linkId);
         assertTrue(link.used);
         assertFalse(paymentLink.isLinkValid(linkId));
     }
@@ -112,7 +119,7 @@ contract PaymentLinkTest is Test {
         assertEq(usdc.balanceOf(issuer), issuerBalanceBefore + INVOICE_AMOUNT);
         assertTrue(payment.isPaid(tokenId));
 
-        PaymentLink.PaymentLink memory link = paymentLink.getLink(linkId);
+        PaymentLink.Link memory link = paymentLink.getLink(linkId);
         assertTrue(link.used);
     }
 
@@ -202,7 +209,7 @@ contract PaymentLinkTest is Test {
         vm.prank(issuer);
         bytes32 linkId = paymentLink.generateLink(tokenId, expiry);
 
-        PaymentLink.PaymentLink memory link = paymentLink.getLinkByInvoice(tokenId);
+        PaymentLink.Link memory link = paymentLink.getLinkByInvoice(tokenId);
         assertEq(link.linkId, linkId);
         assertEq(link.invoiceId, tokenId);
     }
@@ -237,8 +244,8 @@ contract PaymentLinkTest is Test {
         assertTrue(paymentLink.isLinkValid(linkId1));
         assertTrue(paymentLink.isLinkValid(linkId2));
 
-        PaymentLink.PaymentLink memory link1 = paymentLink.getLink(linkId1);
-        PaymentLink.PaymentLink memory link2 = paymentLink.getLink(linkId2);
+        PaymentLink.Link memory link1 = paymentLink.getLink(linkId1);
+        PaymentLink.Link memory link2 = paymentLink.getLink(linkId2);
 
         assertEq(link1.invoiceId, tokenId1);
         assertEq(link2.invoiceId, tokenId2);

@@ -34,16 +34,15 @@ contract InvoiceNFT is ERC721Upgradeable, OwnableUpgradeable, UUPSUpgradeable {
 
     function initialize(address initialOwner) public initializer {
         __ERC721_init("InvoBase Invoice", "INVO");
-        __Ownable_init(initialOwner);
+        __Ownable_init();
         __UUPSUpgradeable_init();
         _nextTokenId = 1;
+        if (initialOwner != msg.sender) {
+            transferOwnership(initialOwner);
+        }
     }
 
-    function mint(
-        address payer,
-        uint256 amount,
-        uint256 dueDate
-    ) external returns (uint256) {
+    function mint(address payer, uint256 amount, uint256 dueDate) external returns (uint256) {
         uint256 tokenId = _nextTokenId++;
 
         _invoices[tokenId] = Invoice({

@@ -50,12 +50,20 @@ contract InvoiceNFTV2 is ERC721Upgradeable, OwnableUpgradeable, UUPSUpgradeable 
     error Unauthorized();
     error PaymentProcessorNotSet();
     error InvalidToken();
+    error InvalidTransition();
+    error AlreadyPaid();
+    error CannotCancelPaidInvoice();
+    error CannotModifyIssuedInvoice();
+    error InvoiceNotIssued();
 
     function initialize(address initialOwner) public initializer {
         __ERC721_init("InvoBase Invoice", "INVO");
-        __Ownable_init(initialOwner);
+        __Ownable_init();
         __UUPSUpgradeable_init();
         _nextTokenId = 1;
+        if (initialOwner != msg.sender) {
+            transferOwnership(initialOwner);
+        }
     }
 
     function initializeV2(address _paymentProcessor) public reinitializer(2) {
@@ -63,11 +71,7 @@ contract InvoiceNFTV2 is ERC721Upgradeable, OwnableUpgradeable, UUPSUpgradeable 
         emit PaymentProcessorSet(_paymentProcessor);
     }
 
-    function mint(
-        address payer,
-        uint256 amount,
-        uint256 dueDate
-    ) external returns (uint256) {
+    function mint(address payer, uint256 amount, uint256 dueDate) external returns (uint256) {
         uint256 tokenId = _nextTokenId++;
 
         _invoices[tokenId] = Invoice({
@@ -86,13 +90,10 @@ contract InvoiceNFTV2 is ERC721Upgradeable, OwnableUpgradeable, UUPSUpgradeable 
         return tokenId;
     }
 
-    function mintWithToken(
-        address payer,
-        uint256 amount,
-        uint256 dueDate,
-        address token,
-        string memory memo
-    ) external returns (uint256) {
+    function mintWithToken(address payer, uint256 amount, uint256 dueDate, address token, string memory memo)
+        external
+        returns (uint256)
+    {
         if (token == address(0)) revert InvalidToken();
 
         uint256 tokenId = _nextTokenId++;
@@ -120,7 +121,7 @@ contract InvoiceNFTV2 is ERC721Upgradeable, OwnableUpgradeable, UUPSUpgradeable 
     function issue(uint256 tokenId) external {
         Invoice storage invoice = _invoices[tokenId];
         if (invoice.issuer != msg.sender) revert Unauthorized();
-        if (invoice.status != InvoiceStatus.Draft) revert InvalidStatus();
+        if (invoice.status != InvoiceStatus.Draft) revert InvalidTransition();
 
         InvoiceStatus oldStatus = invoice.status;
         invoice.status = InvoiceStatus.Issued;
@@ -136,9 +137,19 @@ contract InvoiceNFTV2 is ERC721Upgradeable, OwnableUpgradeable, UUPSUpgradeable 
     function setPartialPayment(uint256 tokenId, bool allowed) external {
         Invoice storage invoice = _invoices[tokenId];
         if (invoice.issuer != msg.sender) revert Unauthorized();
+        if (invoice.status != InvoiceStatus.Draft) revert CannotModifyIssuedInvoice();
 
         partialPaymentAllowed[tokenId] = allowed;
         emit PartialPaymentSet(tokenId, allowed);
+    }
+
+    function setInvoiceToken(uint256 tokenId, address token) external {
+        Invoice storage invoice = _invoices[tokenId];
+        if (invoice.issuer != msg.sender) revert Unauthorized();
+        if (invoice.status != InvoiceStatus.Draft) revert CannotModifyIssuedInvoice();
+
+        invoiceToken[tokenId] = token;
+        emit InvoiceTokenSet(tokenId, token);
     }
 
     function pay(uint256 tokenId) external payable {
@@ -146,9 +157,8 @@ contract InvoiceNFTV2 is ERC721Upgradeable, OwnableUpgradeable, UUPSUpgradeable 
         Invoice storage invoice = _invoices[tokenId];
         if (invoice.status != InvoiceStatus.Issued) revert InvalidStatus();
 
-        (bool success, ) = paymentProcessor.call{value: msg.value}(
-            abi.encodeWithSignature("payInvoice(uint256)", tokenId)
-        );
+        (bool success,) =
+            paymentProcessor.call{value: msg.value}(abi.encodeWithSignature("payInvoice(uint256)", tokenId));
         require(success, "Payment failed");
 
         _updateStatusIfPaid(tokenId);
@@ -165,7 +175,7 @@ contract InvoiceNFTV2 is ERC721Upgradeable, OwnableUpgradeable, UUPSUpgradeable 
         IERC20(token).safeTransferFrom(msg.sender, address(this), amount);
         IERC20(token).approve(paymentProcessor, amount);
 
-        (bool success, ) = paymentProcessor.call(
+        (bool success,) = paymentProcessor.call(
             abi.encodeWithSignature("payInvoiceToken(uint256,address,uint256)", tokenId, token, amount)
         );
         require(success, "Payment failed");
@@ -176,12 +186,18 @@ contract InvoiceNFTV2 is ERC721Upgradeable, OwnableUpgradeable, UUPSUpgradeable 
     function cancel(uint256 tokenId) external {
         Invoice storage invoice = _invoices[tokenId];
         if (invoice.issuer != msg.sender) revert Unauthorized();
-        if (invoice.status == InvoiceStatus.Paid) revert InvalidStatus();
+        if (invoice.status == InvoiceStatus.Paid) revert CannotCancelPaidInvoice();
+        if (invoice.status == InvoiceStatus.Cancelled) revert InvalidTransition();
 
         InvoiceStatus oldStatus = invoice.status;
         invoice.status = InvoiceStatus.Cancelled;
 
         emit StatusChanged(tokenId, oldStatus, InvoiceStatus.Cancelled);
+
+        if (paymentProcessor != address(0) && oldStatus == InvoiceStatus.Issued) {
+            (bool success,) = paymentProcessor.call(abi.encodeWithSignature("refund(uint256)", tokenId));
+            // Ignore refund failures if no payment exists
+        }
     }
 
     function getPaymentStatus(uint256 tokenId) external view returns (bool paid, uint256 remaining) {
@@ -216,6 +232,17 @@ contract InvoiceNFTV2 is ERC721Upgradeable, OwnableUpgradeable, UUPSUpgradeable 
                 emit StatusChanged(tokenId, oldStatus, InvoiceStatus.Paid);
             }
         }
+    }
+
+    function markAsPaid(uint256 tokenId) external {
+        if (msg.sender != paymentProcessor) revert Unauthorized();
+        Invoice storage invoice = _invoices[tokenId];
+        if (invoice.status == InvoiceStatus.Paid) revert AlreadyPaid();
+        if (invoice.status != InvoiceStatus.Issued) revert InvoiceNotIssued();
+
+        InvoiceStatus oldStatus = invoice.status;
+        invoice.status = InvoiceStatus.Paid;
+        emit StatusChanged(tokenId, oldStatus, InvoiceStatus.Paid);
     }
 
     function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}

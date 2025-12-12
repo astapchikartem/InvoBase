@@ -26,7 +26,7 @@ InvoBase V2 enables freelancers, teams, DAOs, and businesses to issue, track, an
              ▼
 ┌──────────────────────────────────────────────────────────┐
 │                  InvoicePayment                          │
-│                  (Escrow Contract)                       │
+│            (Escrow Contract - UUPS Upgradeable)          │
 ├──────────────────────────────────────────────────────────┤
 │  Payment Processing:                                     │
 │  • payInvoice(invoiceId) - ETH payment                   │
@@ -46,7 +46,7 @@ InvoBase V2 enables freelancers, teams, DAOs, and businesses to issue, track, an
              ▼
 ┌──────────────────────────────────────────────────────────┐
 │                    PaymentLink                           │
-│              (Shareable Payment URLs)                    │
+│        (Shareable Payment URLs - UUPS Upgradeable)       │
 ├──────────────────────────────────────────────────────────┤
 │  Link Management:                                        │
 │  • generateLink(invoiceId, expiry) → linkId              │
@@ -90,22 +90,22 @@ InvoBase V2 enables freelancers, teams, DAOs, and businesses to issue, track, an
 - Maintain complete payment audit trail
 
 **Upgradeable Infrastructure**
-- UUPS proxy pattern for InvoiceNFT
+- UUPS proxy pattern for all contracts (InvoiceNFT, InvoicePayment, PaymentLink)
 - Storage-safe upgrades with OpenZeppelin contracts
 - Modular architecture with separate payment contracts
 
 ## Contract Addresses
 
 ### Base Mainnet (V2 - Live)
-- **InvoiceNFT V2 Proxy:** `0xE8E1563be6e10a764C24A46158f661e53D407771` [↗](https://basescan.org/address/0xe8e1563be6e10a764c24a46158f661e53d407771)
-- **InvoicePayment:** `0x7b80808915e58D56E7bB8b12bc860d9BA5029c20` [↗](https://basescan.org/address/0x7b80808915e58d56e7bb8b12bc860d9ba5029c20)
-- **PaymentLink:** `0x0374A00b3bA4143B5e1992f38CC5405c0AaEBC7f` [↗](https://basescan.org/address/0x0374a00b3ba4143b5e1992f38cc5405c0aaebc7f)
+- **InvoiceNFT V2 Proxy:** `0xab5B5Be29048339De2Bf79c51c1634adC987deFb` [↗](https://basescan.org/address/0xab5B5Be29048339De2Bf79c51c1634adC987deFb)
+- **InvoicePayment Proxy:** `0x9a4F17a4dE62be11738d15b39bb0Dfba88cA9B74` [↗](https://basescan.org/address/0x9a4F17a4dE62be11738d15b39bb0Dfba88cA9B74)
+- **PaymentLink Proxy:** `0xDe9aD4eD1909204319AF94605d40CA5886fB97f8` [↗](https://basescan.org/address/0xDe9aD4eD1909204319AF94605d40CA5886fB97f8)
 - **USDC Token:** `0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913`
 
 ### Base Sepolia (V2 - Testnet)
-- **InvoiceNFT V2 Proxy:** `0x59aD7168615DeE3024c4d2719eDAb656ad9cCE9c` [↗](https://sepolia.basescan.org/address/0x59ad7168615dee3024c4d2719edab656ad9cce9c)
-- **InvoicePayment:** `0x775d86D38c6C41a096839f1B0d803B6373d18B82` [↗](https://sepolia.basescan.org/address/0x775d86d38c6c41a096839f1b0d803b6373d18b82)
-- **PaymentLink:** `0xeb13D023920f335B7B4639eCbAB3D479C53825d8` [↗](https://sepolia.basescan.org/address/0xeb13d023920f335b7b4639ecbab3d479c53825d8)
+- **InvoiceNFT V2 Proxy:** `0x8C49fb4c7512A238D7A6fC9B612A0deFFA4890f5` [↗](https://sepolia.basescan.org/address/0x8C49fb4c7512A238D7A6fC9B612A0deFFA4890f5)
+- **InvoicePayment Proxy:** `0x73CBc9E6Ac0b17Ba0b42c9c68Fbb3B9f55485540` [↗](https://sepolia.basescan.org/address/0x73CBc9E6Ac0b17Ba0b42c9c68Fbb3B9f55485540)
+- **PaymentLink Proxy:** `0x5C0D87f9a97eF5592c47D7649668b1a2F9a03DcA` [↗](https://sepolia.basescan.org/address/0x5C0D87f9a97eF5592c47D7649668b1a2F9a03DcA)
 - **USDC Token:** `0x036CbD53842c5426634e7929541eC2318f3dCF7e`
 
 ## Use Cases
@@ -121,7 +121,7 @@ InvoBase V2 enables freelancers, teams, DAOs, and businesses to issue, track, an
 - **Framework:** Foundry
 - **Network:** Base L2 (Mainnet + Sepolia)
 - **Standards:** ERC721, UUPS (ERC1967)
-- **Dependencies:** OpenZeppelin Contracts Upgradeable v5.0.2
+- **Dependencies:** OpenZeppelin Contracts Upgradeable v4.9.6
 
 ## License
 
