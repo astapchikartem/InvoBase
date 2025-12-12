@@ -24,6 +24,16 @@ import {stdJson} from "forge-std/StdJson.sol";
  *     forge script script/Deploy.s.sol:DeployLink<Network> --rpc-url $RPC --broadcast --verify
  */
 
+struct DeploymentAddresses {
+    address nftProxy;
+    address nftImpl;
+    address paymentProxy;
+    address paymentImpl;
+    address linkProxy;
+    address linkImpl;
+    address deployer;
+}
+
 // ========================================
 // BASE SEPOLIA DEPLOYMENTS
 // ========================================
@@ -71,31 +81,33 @@ contract DeployAllSepolia is Script {
 
         console.log("\n[PASS] Deployment complete");
 
-        _saveDeployment("base-sepolia", nft, nftImpl, payment, paymentImpl, link, linkImpl, deployer);
+        _saveDeployment(
+            "base-sepolia",
+            DeploymentAddresses({
+                nftProxy: nft,
+                nftImpl: nftImpl,
+                paymentProxy: payment,
+                paymentImpl: paymentImpl,
+                linkProxy: link,
+                linkImpl: linkImpl,
+                deployer: deployer
+            })
+        );
     }
 
-    function _saveDeployment(
-        string memory network,
-        address nftProxy,
-        address nftImpl,
-        address paymentProxy,
-        address paymentImpl,
-        address linkProxy,
-        address linkImpl,
-        address deployer
-    ) internal {
+    function _saveDeployment(string memory network, DeploymentAddresses memory addrs) internal {
         string memory root = vm.projectRoot();
         string memory path = string.concat(root, "/deployments/", network, ".json");
 
         string memory json = "deployment";
         vm.serializeString(json, "network", network);
-        vm.serializeAddress(json, "nft", nftProxy);
-        vm.serializeAddress(json, "nftImpl", nftImpl);
-        vm.serializeAddress(json, "payment", paymentProxy);
-        vm.serializeAddress(json, "paymentImpl", paymentImpl);
-        vm.serializeAddress(json, "paymentLink", linkProxy);
-        vm.serializeAddress(json, "paymentLinkImpl", linkImpl);
-        vm.serializeAddress(json, "deployer", deployer);
+        vm.serializeAddress(json, "nft", addrs.nftProxy);
+        vm.serializeAddress(json, "nftImpl", addrs.nftImpl);
+        vm.serializeAddress(json, "payment", addrs.paymentProxy);
+        vm.serializeAddress(json, "paymentImpl", addrs.paymentImpl);
+        vm.serializeAddress(json, "paymentLink", addrs.linkProxy);
+        vm.serializeAddress(json, "paymentLinkImpl", addrs.linkImpl);
+        vm.serializeAddress(json, "deployer", addrs.deployer);
         vm.serializeUint(json, "chainId", block.chainid);
         vm.serializeUint(json, "blockNumber", block.number);
         string memory finalJson = vm.serializeUint(json, "timestamp", block.timestamp);
@@ -152,31 +164,33 @@ contract DeployAllMainnet is Script {
 
         console.log("\n[PASS] Deployment complete");
 
-        _saveDeployment("base-mainnet", nft, nftImpl, payment, paymentImpl, link, linkImpl, deployer);
+        _saveDeployment(
+            "base-mainnet",
+            DeploymentAddresses({
+                nftProxy: nft,
+                nftImpl: nftImpl,
+                paymentProxy: payment,
+                paymentImpl: paymentImpl,
+                linkProxy: link,
+                linkImpl: linkImpl,
+                deployer: deployer
+            })
+        );
     }
 
-    function _saveDeployment(
-        string memory network,
-        address nftProxy,
-        address nftImpl,
-        address paymentProxy,
-        address paymentImpl,
-        address linkProxy,
-        address linkImpl,
-        address deployer
-    ) internal {
+    function _saveDeployment(string memory network, DeploymentAddresses memory addrs) internal {
         string memory root = vm.projectRoot();
         string memory path = string.concat(root, "/deployments/", network, ".json");
 
         string memory json = "deployment";
         vm.serializeString(json, "network", network);
-        vm.serializeAddress(json, "nft", nftProxy);
-        vm.serializeAddress(json, "nftImpl", nftImpl);
-        vm.serializeAddress(json, "payment", paymentProxy);
-        vm.serializeAddress(json, "paymentImpl", paymentImpl);
-        vm.serializeAddress(json, "paymentLink", linkProxy);
-        vm.serializeAddress(json, "paymentLinkImpl", linkImpl);
-        vm.serializeAddress(json, "deployer", deployer);
+        vm.serializeAddress(json, "nft", addrs.nftProxy);
+        vm.serializeAddress(json, "nftImpl", addrs.nftImpl);
+        vm.serializeAddress(json, "payment", addrs.paymentProxy);
+        vm.serializeAddress(json, "paymentImpl", addrs.paymentImpl);
+        vm.serializeAddress(json, "paymentLink", addrs.linkProxy);
+        vm.serializeAddress(json, "paymentLinkImpl", addrs.linkImpl);
+        vm.serializeAddress(json, "deployer", addrs.deployer);
         vm.serializeUint(json, "chainId", block.chainid);
         vm.serializeUint(json, "blockNumber", block.number);
         string memory finalJson = vm.serializeUint(json, "timestamp", block.timestamp);
