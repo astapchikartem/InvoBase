@@ -265,14 +265,14 @@ bool paid = payment.isPaid(tokenId);
 ## Contract Addresses
 
 ### Base Mainnet
-- InvoiceNFTV2: `TBD`
-- InvoicePayment: `TBD`
-- PaymentLink: `TBD`
+- InvoiceNFTV2 Proxy: `0xab5B5Be29048339De2Bf79c51c1634adC987deFb`
+- InvoicePayment Proxy: `0x9a4F17a4dE62be11738d15b39bb0Dfba88cA9B74`
+- PaymentLink Proxy: `0xDe9aD4eD1909204319AF94605d40CA5886fB97f8`
 
 ### Base Sepolia
-- InvoiceNFTV2: `TBD`
-- InvoicePayment: `TBD`
-- PaymentLink: `TBD`
+- InvoiceNFTV2 Proxy: `0x8C49fb4c7512A238D7A6fC9B612A0deFFA4890f5`
+- InvoicePayment Proxy: `0x73CBc9E6Ac0b17Ba0b42c9c68Fbb3B9f55485540`
+- PaymentLink Proxy: `0x5C0D87f9a97eF5592c47D7649668b1a2F9a03DcA`
 
 ## Changelog
 

@@ -1,10 +1,21 @@
 {
   "network": "base-sepolia",
-  "nft": "0x59aD7168615DeE3024c4d2719eDAb656ad9cCE9c",
-  "nftImpl": "0x8eBd6702F8F1a4290A974116BB42E9Ce94942676",
-  "payment": "0x775d86D38c6C41a096839f1B0d803B6373d18B82",
-  "paymentLink": "0xeb13D023920f335B7B4639eCbAB3D479C53825d8",
-  "deployer": "0x2A028763A83FFcC360cfbE23ef19b3bd4CEc3f14",
   "chainId": 84532,
-  "usdc": "0x036CbD53842c5426634e7929541eC2318f3dCF7e"
+  "deployer": "0x2A028763A83FFcC360cfbE23ef19b3bd4CEc3f14",
+  "nft": "0x8C49fb4c7512A238D7A6fC9B612A0deFFA4890f5",
+  "nftImpl": "0x3f929C944c2cc1572F826344Cf7aE16C8D4dE6F7",
+  "payment": "0x73CBc9E6Ac0b17Ba0b42c9c68Fbb3B9f55485540",
+  "paymentImpl": "0xD97153EB92f8367A8FCBAC99823425AC2c02480a",
+  "paymentLink": "0x5C0D87f9a97eF5592c47D7649668b1a2F9a03DcA",
+  "paymentLinkImpl": "0x7ca28610F55a286C8032a69b7a5afEa8D038BA29",
+  "usdc": "0x036CbD53842c5426634e7929541eC2318f3dCF7e",
+  "verified": true,
+  "urls": {
+    "nft": "https://sepolia.basescan.org/address/0x8C49fb4c7512A238D7A6fC9B612A0deFFA4890f5",
+    "nftImpl": "https://sepolia.basescan.org/address/0x3f929C944c2cc1572F826344Cf7aE16C8D4dE6F7",
+    "payment": "https://sepolia.basescan.org/address/0x73CBc9E6Ac0b17Ba0b42c9c68Fbb3B9f55485540",
+    "paymentImpl": "https://sepolia.basescan.org/address/0xD97153EB92f8367A8FCBAC99823425AC2c02480a",
+    "paymentLink": "https://sepolia.basescan.org/address/0x5C0D87f9a97eF5592c47D7649668b1a2F9a03DcA",
+    "paymentLinkImpl": "https://sepolia.basescan.org/address/0x7ca28610F55a286C8032a69b7a5afEa8D038BA29"
+  }
 }
